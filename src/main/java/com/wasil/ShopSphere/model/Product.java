@@ -6,6 +6,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.IdGeneratorType;
+import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.Instant;
 
@@ -18,8 +19,11 @@ public class Product {
     private String prodName;
     private Double prodPrice;
     private String prodDescription;
+    private Integer prodStock;
     @CreationTimestamp
     private Instant prodCreatedAt;
+    @UpdateTimestamp
+    private Instant prodUpdatedAt;
 
     public Product(){
 
@@ -37,6 +41,10 @@ public class Product {
 
     public Instant getProdCreatedAt() {
         return prodCreatedAt;
+    }
+
+    public Instant getProdUpdatedAt() {
+        return prodUpdatedAt;
     }
 
     public String getProdName() {
@@ -63,4 +71,11 @@ public class Product {
         this.prodDescription = prodDescription;
     }
 
+    public Integer getProdStock() {
+        return prodStock;
+    }
+
+    public void setProdStock(Integer prodStock) {
+        this.prodStock = prodStock;
+    }
 }
