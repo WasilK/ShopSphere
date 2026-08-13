@@ -4,9 +4,11 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.IdGeneratorType;
 
-import java.util.Date;
+import java.time.Instant;
+
 
 @Entity
 public class Product {
@@ -16,6 +18,12 @@ public class Product {
     private String prodName;
     private Double prodPrice;
     private String prodDescription;
+    @CreationTimestamp
+    private Instant prodCreatedAt;
+
+    public Product(){
+
+    }
 
     public Product(String prodName, Double prodPrice, String prodDescription) {
         this.prodName = prodName;
@@ -25,6 +33,10 @@ public class Product {
 
     public Long getProdId() {
         return prodId;
+    }
+
+    public Instant getProdCreatedAt() {
+        return prodCreatedAt;
     }
 
     public String getProdName() {
