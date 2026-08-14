@@ -1,7 +1,9 @@
 package com.wasil.ShopSphere.controller;
 
-import com.wasil.ShopSphere.model.Product;
+import com.wasil.ShopSphere.dto.product.ProductRequest;
+import com.wasil.ShopSphere.dto.product.ProductResponse;
 import com.wasil.ShopSphere.services.ProductService;
+import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -14,22 +16,26 @@ public class ProductController {
     public ProductController(ProductService productService) {
         this.productService = productService;
     }
-    @PostMapping("/addProduct")
-    public Product addProduct(@RequestBody Product product){
-        return productService.addProduct(product);
+    @PostMapping
+    public ProductResponse addProduct(@Valid @RequestBody ProductRequest productRequest){
+        return productService.addProduct(productRequest);
     }
 
     @GetMapping
-    public List<Product> getAllProducts(){
+    public List<ProductResponse> getAllProducts(){
         return productService.getAllProducts();
     }
-
-    @PutMapping("/updateProduct/{id}")
-    public Product updateProduct(@PathVariable Long id, @RequestBody Product product){
-        return productService.updateProduct(id, product);
+    @GetMapping("/{id}")
+    public ProductResponse getProductById(@PathVariable Long id){
+        return productService.getProductById(id);
     }
 
-    @DeleteMapping("/deleteProduct/{id}")
+    @PutMapping("/{id}")
+    public ProductResponse updateProduct(@PathVariable Long id, @Valid @RequestBody ProductRequest productRequest){
+        return productService.updateProduct(id, productRequest);
+    }
+
+    @DeleteMapping("/{id}")
     public void deleteProduct(@PathVariable Long id){
         productService.deleteProduct(id);
     }
