@@ -1,6 +1,7 @@
 package com.wasil.ShopSphere.controller;
 
-import com.wasil.ShopSphere.model.Product;
+import com.wasil.ShopSphere.dto.product.ProductRequest;
+import com.wasil.ShopSphere.dto.product.ProductResponse;
 import com.wasil.ShopSphere.services.ProductService;
 import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.*;
@@ -16,22 +17,22 @@ public class ProductController {
         this.productService = productService;
     }
     @PostMapping
-    public Product addProduct(@Valid @RequestBody Product product){
-        return productService.addProduct(product);
+    public ProductResponse addProduct(@Valid @RequestBody ProductRequest productRequest){
+        return productService.addProduct(productRequest);
     }
 
     @GetMapping
-    public List<Product> getAllProducts(){
+    public List<ProductResponse> getAllProducts(){
         return productService.getAllProducts();
     }
     @GetMapping("/{id}")
-    public Product getProductById(@PathVariable Long id){
+    public ProductResponse getProductById(@PathVariable Long id){
         return productService.getProductById(id);
     }
 
     @PutMapping("/{id}")
-    public Product updateProduct(@PathVariable Long id, @Valid @RequestBody Product product){
-        return productService.updateProduct(id, product);
+    public ProductResponse updateProduct(@PathVariable Long id, @Valid @RequestBody ProductRequest productRequest){
+        return productService.updateProduct(id, productRequest);
     }
 
     @DeleteMapping("/{id}")
