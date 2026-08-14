@@ -2,6 +2,7 @@ package com.wasil.ShopSphere.controller;
 
 import com.wasil.ShopSphere.model.Product;
 import com.wasil.ShopSphere.services.ProductService;
+import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -15,7 +16,7 @@ public class ProductController {
         this.productService = productService;
     }
     @PostMapping
-    public Product addProduct(@RequestBody Product product){
+    public Product addProduct(@Valid @RequestBody Product product){
         return productService.addProduct(product);
     }
 
@@ -29,7 +30,7 @@ public class ProductController {
     }
 
     @PutMapping("/{id}")
-    public Product updateProduct(@PathVariable Long id, @RequestBody Product product){
+    public Product updateProduct(@PathVariable Long id, @Valid @RequestBody Product product){
         return productService.updateProduct(id, product);
     }
 
