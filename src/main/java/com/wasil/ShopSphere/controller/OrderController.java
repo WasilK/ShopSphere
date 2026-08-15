@@ -6,6 +6,8 @@ import com.wasil.ShopSphere.services.OrderService;
 import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/orders")
 public class OrderController {
@@ -21,5 +23,20 @@ public class OrderController {
             @Valid @RequestBody OrderRequest request) {
 
         return orderService.createOrder(request);
+    }
+
+    @GetMapping("/{id}")
+    public OrderResponse getOrderById(@PathVariable Long id) {
+        return orderService.getOrderById(id);
+    }
+
+    @GetMapping
+    public List<OrderResponse> getAllOrders() {
+        return orderService.getAllOrders();
+    }
+
+    @PutMapping("/{id}/cancel")
+    public OrderResponse cancelOrder(@PathVariable Long id) {
+        return orderService.cancelOrder(id);
     }
 }

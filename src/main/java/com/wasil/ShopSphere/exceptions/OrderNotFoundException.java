@@ -1,0 +1,7 @@
+package com.wasil.ShopSphere.exceptions;
+
+public class OrderNotFoundException extends RuntimeException {
+    public OrderNotFoundException(String message) {
+        super(message);
+    }
+}

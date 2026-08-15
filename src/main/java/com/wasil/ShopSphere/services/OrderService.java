@@ -4,8 +4,7 @@ import com.wasil.ShopSphere.dto.order.OrderItemRequest;
 import com.wasil.ShopSphere.dto.order.OrderRequest;
 import com.wasil.ShopSphere.dto.order.OrderResponse;
 import com.wasil.ShopSphere.dto.order.OrderItemResponse;
-import com.wasil.ShopSphere.exceptions.ProductNotFoundException;
-import com.wasil.ShopSphere.exceptions.UserNotFoundException;
+import com.wasil.ShopSphere.exceptions.*;
 import com.wasil.ShopSphere.model.Order;
 import com.wasil.ShopSphere.model.OrderItem;
 import com.wasil.ShopSphere.model.OrderStatus;
@@ -21,6 +20,8 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
+
+import static java.util.stream.Collectors.toList;
 
 @Service
 public class OrderService {
@@ -72,16 +73,9 @@ public class OrderService {
                                             + itemRequest.getProductId()
                             ));
 
-            // Check quantity
-            if (itemRequest.getQuantity() <= 0) {
-                throw new IllegalArgumentException(
-                        "Quantity must be greater than 0"
-                );
-            }
-
             // Check stock
             if (product.getProdStock() < itemRequest.getQuantity()) {
-                throw new IllegalArgumentException(
+                throw new InsufficientStockException(
                         "Insufficient stock for product: "
                                 + product.getProdName()
                 );
@@ -131,6 +125,41 @@ public class OrderService {
         return convertToResponse(savedOrder, orderItems);
     }
 
+    public OrderResponse getOrderById(Long orderId) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new OrderNotFoundException("Order not found with id: " + orderId));
+
+        List<OrderItem> orderItems = orderItemRepository.findByOrder(order);
+
+        return convertToResponse(order, orderItems);
+    }
+
+    public List<OrderResponse> getAllOrders(){
+        return orderRepository.findAll().stream().map(order -> convertToResponse(order, orderItemRepository.findByOrder(order))).toList();
+    }
+
+    @Transactional
+    public OrderResponse cancelOrder(Long orderId){
+        Order order = orderRepository.findById(orderId).orElseThrow(() -> new OrderNotFoundException("Order not found with id: " + orderId));
+        if (order.getOrderStatus() != OrderStatus.PENDING &&
+                order.getOrderStatus() != OrderStatus.CONFIRMED) {
+
+            throw new OrderCannotBeCancelled(
+                    "Order with id: " + orderId +
+                            " cannot be cancelled as it is in " +
+                            order.getOrderStatus() + " status."
+            );
+        }
+            order.setOrderStatus(OrderStatus.CANCELLED);
+            List<OrderItem> orderItems = orderItemRepository.findByOrder(order);
+            for(OrderItem item : orderItems){
+                Product product = item.getProduct();
+                product.setProdStock(product.getProdStock() + item.getQuantity());
+                productRepository.save(product);
+            }
+            Order savedOrder = orderRepository.save(order);
+            return convertToResponse(savedOrder, orderItems);
+    }
 
     private OrderResponse convertToResponse(
             Order order,
