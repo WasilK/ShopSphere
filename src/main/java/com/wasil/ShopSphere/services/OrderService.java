@@ -5,15 +5,8 @@ import com.wasil.ShopSphere.dto.order.OrderRequest;
 import com.wasil.ShopSphere.dto.order.OrderResponse;
 import com.wasil.ShopSphere.dto.order.OrderItemResponse;
 import com.wasil.ShopSphere.exceptions.*;
-import com.wasil.ShopSphere.model.Order;
-import com.wasil.ShopSphere.model.OrderItem;
-import com.wasil.ShopSphere.model.OrderStatus;
-import com.wasil.ShopSphere.model.Product;
-import com.wasil.ShopSphere.model.User;
-import com.wasil.ShopSphere.repositories.OrderItemRepository;
-import com.wasil.ShopSphere.repositories.OrderRepository;
-import com.wasil.ShopSphere.repositories.ProductRepository;
-import com.wasil.ShopSphere.repositories.UserRepository;
+import com.wasil.ShopSphere.model.*;
+import com.wasil.ShopSphere.repositories.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -30,17 +23,23 @@ public class OrderService {
     private final OrderItemRepository orderItemRepository;
     private final UserRepository userRepository;
     private final ProductRepository productRepository;
+    private final InventoryRepository inventoryRepository;
+    private final StockMovementRepository stockMovementRepository;
 
     public OrderService(
             OrderRepository orderRepository,
             OrderItemRepository orderItemRepository,
             UserRepository userRepository,
-            ProductRepository productRepository) {
+            ProductRepository productRepository,
+            InventoryRepository inventoryRepository,
+            StockMovementRepository stockMovementRepository) {
 
         this.orderRepository = orderRepository;
         this.orderItemRepository = orderItemRepository;
         this.userRepository = userRepository;
         this.productRepository = productRepository;
+        this.inventoryRepository = inventoryRepository;
+        this.stockMovementRepository = stockMovementRepository;
     }
 
     @Transactional
@@ -72,9 +71,9 @@ public class OrderService {
                                     "Product not found with id: "
                                             + itemRequest.getProductId()
                             ));
-
+            Inventory inventory = inventoryRepository.findByProduct(product).orElseThrow(() -> new InventoryNotFoundException("Inventory not found"));
             // Check stock
-            if (product.getProdStock() < itemRequest.getQuantity()) {
+            if (inventory.getCurrentStock() < itemRequest.getQuantity()) {
                 throw new InsufficientStockException(
                         "Insufficient stock for product: "
                                 + product.getProdName()
@@ -103,11 +102,18 @@ public class OrderService {
             totalAmount = totalAmount.add(itemTotal);
 
             // Reduce stock
-            product.setProdStock(
-                    product.getProdStock() - itemRequest.getQuantity()
+            inventory.setCurrentStock(
+                    inventory.getCurrentStock() - itemRequest.getQuantity()
             );
 
-            productRepository.save(product);
+            inventoryRepository.save(inventory);
+
+            StockMovement stockMovement = new StockMovement();
+            stockMovement.setInventory(inventory);
+            stockMovement.setQuantity(itemRequest.getQuantity());
+            stockMovement.setMovementType(MovementType.ORDER);
+
+            stockMovementRepository.save(stockMovement);
         }
 
         // 4. Set total
@@ -154,8 +160,15 @@ public class OrderService {
             List<OrderItem> orderItems = orderItemRepository.findByOrder(order);
             for(OrderItem item : orderItems){
                 Product product = item.getProduct();
-                product.setProdStock(product.getProdStock() + item.getQuantity());
-                productRepository.save(product);
+                Inventory inventory = inventoryRepository.findByProduct(product).orElseThrow(() -> new InventoryNotFoundException("Inventory not found"));
+                inventory.setCurrentStock(inventory.getCurrentStock() + item.getQuantity());
+                inventoryRepository.save(inventory);
+                StockMovement stockMovement = new StockMovement();
+                stockMovement.setInventory(inventory);
+                stockMovement.setQuantity(item.getQuantity());
+                stockMovement.setMovementType(MovementType.ORDER_CANCELLED);
+
+                stockMovementRepository.save(stockMovement);
             }
             Order savedOrder = orderRepository.save(order);
             return convertToResponse(savedOrder, orderItems);
@@ -186,7 +199,7 @@ public class OrderService {
 
             OrderItemResponse itemResponse = new OrderItemResponse();
 
-            itemResponse.setOrderItemId(item.getOrder().getOrderId());
+            itemResponse.setOrderItemId(item.getOrderItemId());
             itemResponse.setProductId(item.getProduct().getProdId());
             itemResponse.setQuantity(item.getQuantity());
             itemResponse.setPrice(item.getPrice());

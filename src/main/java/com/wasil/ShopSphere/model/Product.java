@@ -28,17 +28,9 @@ public class Product {
 
     private String prodDescription;
 
-    private Integer prodStock;
-
     @CreationTimestamp
     private Instant prodCreatedAt;
     @UpdateTimestamp
     private Instant prodUpdatedAt;
 
-    public Product(String prodName, BigDecimal prodPrice, String prodDescription, Integer prodStock) {
-        this.prodName = prodName;
-        this.prodPrice = prodPrice;
-        this.prodDescription = prodDescription;
-        this.prodStock = prodStock;
-    }
 }

@@ -1,9 +1,12 @@
 package com.wasil.ShopSphere.services;
 
+import com.wasil.ShopSphere.dto.inventory.InventoryResponse;
 import com.wasil.ShopSphere.dto.product.ProductRequest;
 import com.wasil.ShopSphere.dto.product.ProductResponse;
 import com.wasil.ShopSphere.exceptions.ProductNotFoundException;
+import com.wasil.ShopSphere.model.Inventory;
 import com.wasil.ShopSphere.model.Product;
+import com.wasil.ShopSphere.repositories.InventoryRepository;
 import com.wasil.ShopSphere.repositories.ProductRepository;
 import org.springframework.stereotype.Service;
 
@@ -12,9 +15,11 @@ import java.util.List;
 @Service
 public class ProductService {
     private final ProductRepository prodRepo;
+    private final InventoryRepository inventoryRepository;
 
-    public ProductService(ProductRepository prodRepo) {
+    public ProductService(ProductRepository prodRepo, InventoryRepository inventoryRepository) {
         this.prodRepo = prodRepo;
+        this.inventoryRepository = inventoryRepository;
     }
 
     public ProductResponse addProduct(ProductRequest productRequest) {
@@ -22,8 +27,11 @@ public class ProductService {
        product.setProdName(productRequest.getProdName());
        product.setProdPrice(productRequest.getProdPrice());
        product.setProdDescription(productRequest.getProdDescription());
-       product.setProdStock(productRequest.getProdStock());
        Product savedProduct =  prodRepo.save(product);
+       Inventory inventory = new Inventory();
+       inventory.setProduct(savedProduct);
+       inventory.setCurrentStock(0);
+       inventoryRepository.save(inventory);
        return convertToResponse(savedProduct);
     }
 
@@ -41,7 +49,6 @@ public class ProductService {
         existingProduct.setProdName(productRequest.getProdName());
         existingProduct.setProdPrice(productRequest.getProdPrice());
         existingProduct.setProdDescription(productRequest.getProdDescription());
-        existingProduct.setProdStock(productRequest.getProdStock());
         Product updatedProduct = prodRepo.save(existingProduct);
         return convertToResponse(updatedProduct);
     }
@@ -51,6 +58,7 @@ public class ProductService {
         prodRepo.delete(existingProduct);
     }
 
+
     private ProductResponse convertToResponse(Product product) {
 
         ProductResponse response = new ProductResponse();
@@ -59,10 +67,10 @@ public class ProductService {
         response.setProdName(product.getProdName());
         response.setProdPrice(product.getProdPrice());
         response.setProdDescription(product.getProdDescription());
-        response.setProdStock(product.getProdStock());
         response.setProdCreatedAt(product.getProdCreatedAt());
         response.setProdUpdatedAt(product.getProdUpdatedAt());
 
         return response;
     }
+
 }
