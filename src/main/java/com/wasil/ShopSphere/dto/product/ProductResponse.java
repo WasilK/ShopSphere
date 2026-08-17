@@ -14,7 +14,6 @@ public class ProductResponse {
     private String prodName;
     private BigDecimal prodPrice;
     private String prodDescription;
-    private Integer prodStock;
     private Instant prodCreatedAt;
     private Instant prodUpdatedAt;
 }

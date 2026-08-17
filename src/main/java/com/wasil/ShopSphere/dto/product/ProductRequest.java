@@ -19,7 +19,4 @@ public class ProductRequest {
     @Size(min = 10, max = 1000, message = "Description must be between 10 and 1000 characters")
     private String prodDescription;
 
-    @NotNull(message = "Product stock is required")
-    @PositiveOrZero(message = "Stock cannot be negative")
-    private Integer prodStock;
 }
