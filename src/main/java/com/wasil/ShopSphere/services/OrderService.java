@@ -161,6 +161,12 @@ public class OrderService {
             return convertToResponse(savedOrder, orderItems);
     }
 
+    public List<OrderResponse> getOrdersByUser(Long userId){
+        List<Order> orders = orderRepository.findByUser(userRepository.findById(userId).orElseThrow(() -> new UserNotFoundException("User not found with id: " + userId)));
+        return orders.stream().map(order ->
+             convertToResponse(order, orderItemRepository.findByOrder(order))).toList();
+    }
+
     private OrderResponse convertToResponse(
             Order order,
             List<OrderItem> orderItems) {
