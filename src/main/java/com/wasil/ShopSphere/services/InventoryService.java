@@ -2,6 +2,7 @@ package com.wasil.ShopSphere.services;
 
 import com.wasil.ShopSphere.dto.inventory.InventoryResponse;
 import com.wasil.ShopSphere.dto.inventory.RestockRequest;
+import com.wasil.ShopSphere.dto.inventory.StockMovementResponse;
 import com.wasil.ShopSphere.exceptions.InventoryNotFoundException;
 import com.wasil.ShopSphere.exceptions.ProductNotFoundException;
 import com.wasil.ShopSphere.model.Inventory;
@@ -14,7 +15,7 @@ import com.wasil.ShopSphere.repositories.StockMovementRepository;
 import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
 
-import java.util.Optional;
+import java.util.List;
 
 @Service
 public class InventoryService {
@@ -48,6 +49,11 @@ public class InventoryService {
         Inventory inventory = inventoryRepository.findByProduct(product).orElseThrow(() -> new InventoryNotFoundException("Inventory not found for product: " + prodId));
         return convertToResponse(inventory);
     }
+    public List<StockMovementResponse> getStockMovements(Long inventoryId){
+        Inventory inventory = inventoryRepository.findById(inventoryId).orElseThrow(() -> new InventoryNotFoundException("Inventory not found for id: " + inventoryId));
+        List<StockMovement> stms = stockMovementRepository.findByInventory(inventory);
+        return stms.stream().map(this::convertToResponse).toList();
+    }
     private InventoryResponse convertToResponse(Inventory inventory) {
 
         InventoryResponse response = new InventoryResponse();
@@ -57,6 +63,15 @@ public class InventoryService {
         response.setCurrentStock(inventory.getCurrentStock());
         response.setUpdatedAt(inventory.getUpdatedAt());
 
+        return response;
+    }
+
+    private StockMovementResponse convertToResponse(StockMovement stm) {
+        StockMovementResponse response = new StockMovementResponse();
+        response.setStockId(stm.getStockId());
+        response.setQuantity(stm.getQuantity());
+        response.setMovementType(stm.getMovementType());
+        response.setCreatedAt(stm.getCreatedAt());
         return response;
     }
 }

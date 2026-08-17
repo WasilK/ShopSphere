@@ -7,7 +7,6 @@ import java.time.Instant;
 
 @Data
 public class StockMovementResponse {
-
     private Long stockId;
     private Integer quantity;
     private MovementType movementType;
