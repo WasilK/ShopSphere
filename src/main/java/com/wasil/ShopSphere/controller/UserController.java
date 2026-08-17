@@ -1,7 +1,9 @@
 package com.wasil.ShopSphere.controller;
 
+import com.wasil.ShopSphere.dto.order.OrderResponse;
 import com.wasil.ShopSphere.dto.user.UserRequest;
 import com.wasil.ShopSphere.dto.user.UserResponse;
+import com.wasil.ShopSphere.services.OrderService;
 import com.wasil.ShopSphere.services.UserService;
 import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.*;
@@ -11,9 +13,11 @@ import java.util.List;
 @RestController
 @RequestMapping("/users")
 public class UserController {
-    private UserService userService;
-     public UserController(UserService userService) {
+    private final OrderService orderService;
+    private final UserService userService;
+     public UserController(UserService userService, OrderService orderService) {
          this.userService = userService;
+         this.orderService = orderService;
      }
 
      @GetMapping
@@ -39,5 +43,10 @@ public class UserController {
     @DeleteMapping("/{id}")
     public void deleteUser(@PathVariable Long id){
         userService.deleteUser(id);
+    }
+
+    @GetMapping("/{id}/orders")
+    public List<OrderResponse> getOrders(@PathVariable Long id){
+         return orderService.getOrdersByUser(id);
     }
 }
