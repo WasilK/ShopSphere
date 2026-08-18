@@ -1,8 +1,10 @@
 package com.wasil.ShopSphere.controller;
 
+import com.wasil.ShopSphere.dto.cart.CartResponse;
 import com.wasil.ShopSphere.dto.order.OrderResponse;
 import com.wasil.ShopSphere.dto.user.UserRequest;
 import com.wasil.ShopSphere.dto.user.UserResponse;
+import com.wasil.ShopSphere.services.CartService;
 import com.wasil.ShopSphere.services.OrderService;
 import com.wasil.ShopSphere.services.UserService;
 import jakarta.validation.Valid;
@@ -15,9 +17,11 @@ import java.util.List;
 public class UserController {
     private final OrderService orderService;
     private final UserService userService;
-     public UserController(UserService userService, OrderService orderService) {
+    private final CartService cartService;
+     public UserController(UserService userService, OrderService orderService, CartService cartService) {
          this.userService = userService;
          this.orderService = orderService;
+         this.cartService = cartService;
      }
 
      @GetMapping
@@ -48,5 +52,10 @@ public class UserController {
     @GetMapping("/{id}/orders")
     public List<OrderResponse> getOrders(@PathVariable Long id){
          return orderService.getOrdersByUser(id);
+    }
+
+    @GetMapping("/{id}/cart")
+    public CartResponse getCartByUser(@PathVariable Long id){
+         return cartService.getCartByUser(id);
     }
 }
