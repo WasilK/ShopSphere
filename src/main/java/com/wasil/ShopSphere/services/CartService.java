@@ -3,6 +3,7 @@ package com.wasil.ShopSphere.services;
 import com.wasil.ShopSphere.dto.cart.AddToCartRequest;
 import com.wasil.ShopSphere.dto.cart.CartItemResponse;
 import com.wasil.ShopSphere.dto.cart.CartResponse;
+import com.wasil.ShopSphere.dto.cart.UpdateCartItemRequest;
 import com.wasil.ShopSphere.exceptions.*;
 import com.wasil.ShopSphere.model.*;
 import com.wasil.ShopSphere.repositories.*;
@@ -109,6 +110,7 @@ public class CartService {
 
         return convertToCartResponse(cart, cartItems);
     }
+    @Transactional
     public CartResponse getCartByUser(Long userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() ->
@@ -125,6 +127,84 @@ public class CartService {
         List<CartItem> cartItems = cartItemRepository.findByCart(cart);
 
         return convertToCartResponse(cart, cartItems);
+    }
+    @Transactional
+    public CartResponse updateCartItemQuantity(
+            Long cartItemId,
+            UpdateCartItemRequest request) {
+
+        // 1. Find CartItem
+        CartItem cartItem = cartItemRepository.findById(cartItemId)
+                .orElseThrow(() ->
+                        new CartItemNotFoundException(
+                                "Cart item not found with id: " + cartItemId
+                        ));
+
+        // 2. Get Cart
+        Cart cart = cartItem.getCart();
+
+        // 3. Get Product
+        Product product = cartItem.getProduct();
+
+        // 4. Get Inventory
+        Inventory inventory = inventoryRepository.findByProduct(product)
+                .orElseThrow(() ->
+                        new InventoryNotFoundException(
+                                "Inventory not found for product: "
+                                        + product.getProdName()
+                        ));
+
+        // 5. Check requested quantity against available stock
+        if (request.getQuantity() > inventory.getCurrentStock()) {
+            throw new InsufficientStockException(
+                    "Insufficient stock for product: "
+                            + product.getProdName()
+            );
+        }
+
+        // 6. Update quantity
+        cartItem.setQuantity(request.getQuantity());
+
+        cartItemRepository.save(cartItem);
+
+        // 7. Get updated cart items
+        List<CartItem> cartItems =
+                cartItemRepository.findByCart(cart);
+
+        // 8. Return updated cart
+        return convertToCartResponse(cart, cartItems);
+    }
+    @Transactional
+    public CartResponse removeCartItem(Long cartItemId){
+        CartItem cartItem = cartItemRepository.findById(cartItemId)
+                .orElseThrow(() ->
+                        new CartItemNotFoundException(
+                                "Cart item not found with id: " + cartItemId
+                        ));
+        Cart cart = cartItem.getCart();
+        cartItemRepository.delete(cartItem);
+        return convertToCartResponse(cart, cartItemRepository.findByCart(cart));
+    }
+    @Transactional
+    public CartResponse clearCart(Long userId) {
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() ->
+                        new UserNotFoundException(
+                                "User not found with id: " + userId
+                        ));
+
+        Cart cart = cartRepository.findByUser(user)
+                .orElseThrow(() ->
+                        new CartNotFoundException(
+                                "Cart not found for user with id: " + userId
+                        ));
+
+        cart.getCartItems().clear();
+
+        cartRepository.save(cart);
+
+        return convertToCartResponse(cart, cartItemRepository.findByCart(cart));
     }
     private CartResponse convertToCartResponse(
             Cart cart,
