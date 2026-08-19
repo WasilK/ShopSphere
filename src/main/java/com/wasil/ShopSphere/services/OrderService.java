@@ -25,6 +25,8 @@ public class OrderService {
     private final ProductRepository productRepository;
     private final InventoryRepository inventoryRepository;
     private final StockMovementRepository stockMovementRepository;
+    private final CartRepository cartRepository;
+    private final CartService cartService;
 
     public OrderService(
             OrderRepository orderRepository,
@@ -32,7 +34,9 @@ public class OrderService {
             UserRepository userRepository,
             ProductRepository productRepository,
             InventoryRepository inventoryRepository,
-            StockMovementRepository stockMovementRepository) {
+            StockMovementRepository stockMovementRepository,
+            CartRepository cartRepository,
+            CartService cartService) {
 
         this.orderRepository = orderRepository;
         this.orderItemRepository = orderItemRepository;
@@ -40,6 +44,8 @@ public class OrderService {
         this.productRepository = productRepository;
         this.inventoryRepository = inventoryRepository;
         this.stockMovementRepository = stockMovementRepository;
+        this.cartRepository = cartRepository;
+        this.cartService = cartService;
     }
 
     @Transactional
@@ -179,7 +185,98 @@ public class OrderService {
         return orders.stream().map(order ->
              convertToResponse(order, orderItemRepository.findByOrder(order))).toList();
     }
+    @Transactional
+    public OrderResponse checkoutOrder(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() ->
+                        new UserNotFoundException(
+                                "User not found with id: " + userId
+                        ));
 
+        Cart cart = cartRepository.findByUser(user)
+                .orElseThrow(() ->
+                        new CartNotFoundException("Cart not found"));
+
+        List<CartItem> cartItems = cart.getCartItems();
+
+        if (cartItems.isEmpty()) {
+            throw new CartEmptyException("Cart is empty");
+        }
+
+        Order order = new Order();
+        order.setUser(user);
+        order.setOrderStatus(OrderStatus.PENDING);
+
+        BigDecimal totalAmount = BigDecimal.ZERO;
+
+        List<OrderItem> orderItems = new ArrayList<>();
+
+        for (CartItem cartItem : cartItems) {
+
+            Product product = cartItem.getProduct();
+
+            Inventory inventory = inventoryRepository.findByProduct(product)
+                    .orElseThrow(() ->
+                            new InventoryNotFoundException(
+                                    "Inventory not found"
+                            ));
+
+            if (cartItem.getQuantity() > inventory.getCurrentStock()) {
+                throw new InsufficientStockException(
+                        "Insufficient stock for product: "
+                                + product.getProdName()
+                );
+            }
+
+            BigDecimal price = product.getProdPrice();
+
+            OrderItem orderItem = new OrderItem();
+
+            orderItem.setProduct(product);
+            orderItem.setQuantity(cartItem.getQuantity());
+            orderItem.setPrice(price);
+            orderItem.setOrder(order);
+
+            orderItems.add(orderItem);
+
+            totalAmount = totalAmount.add(
+                    price.multiply(
+                            BigDecimal.valueOf(cartItem.getQuantity())
+                    )
+            );
+
+            inventory.setCurrentStock(
+                    inventory.getCurrentStock()
+                            - cartItem.getQuantity()
+            );
+
+            inventoryRepository.save(inventory);
+
+            StockMovement stockMovement = new StockMovement();
+
+            stockMovement.setInventory(inventory);
+            stockMovement.setQuantity(cartItem.getQuantity());
+            stockMovement.setMovementType(MovementType.ORDER);
+
+            stockMovementRepository.save(stockMovement);
+        }
+
+        // Set total
+        order.setTotalAmount(totalAmount);
+
+        // Save Order first
+        Order savedOrder = orderRepository.save(order);
+
+        // Save OrderItems
+        for (OrderItem orderItem : orderItems) {
+            orderItemRepository.save(orderItem);
+        }
+
+        // Clear cart
+        cartService.clearCart(userId);
+
+        return convertToResponse(savedOrder, orderItems);
+    }
     private OrderResponse convertToResponse(
             Order order,
             List<OrderItem> orderItems) {

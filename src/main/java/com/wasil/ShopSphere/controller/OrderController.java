@@ -40,4 +40,9 @@ public class OrderController {
         return orderService.cancelOrder(id);
     }
 
+    @PostMapping("/{userId}/checkout")
+    public OrderResponse checkoutOrder(@PathVariable Long userId) {
+        return orderService.checkoutOrder(userId);
+    }
+
 }
