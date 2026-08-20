@@ -3,6 +3,7 @@ package com.wasil.ShopSphere.exceptions;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -99,6 +100,30 @@ public class GlobalExceptionHandler {
     public ResponseEntity<String> handleCartItemNotFound(CartItemNotFoundException ex) {
         return ResponseEntity
                 .status(HttpStatus.NOT_FOUND)
+                .body(ex.getMessage());
+    }
+    @ExceptionHandler(CartEmptyException.class)
+    public ResponseEntity<String> handleCartEmpty(
+            CartEmptyException ex
+    ){
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(ex.getMessage());
+    }
+    @ExceptionHandler(ObjectOptimisticLockingFailureException.class)
+    public ResponseEntity<String> handleOptimisticLocking(
+            ObjectOptimisticLockingFailureException ex) {
+
+        return ResponseEntity
+                .status(HttpStatus.CONFLICT)
+                .body("Inventory was updated by another request. Please try again.");
+    }
+    @ExceptionHandler(OrderStatusCannotBeUpdatedException.class)
+    public ResponseEntity<String> handleOrderStatusCannotBeUpdated(
+            OrderStatusCannotBeUpdatedException ex) {
+
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
                 .body(ex.getMessage());
     }
 }

@@ -2,6 +2,7 @@ package com.wasil.ShopSphere.controller;
 
 import com.wasil.ShopSphere.dto.order.OrderRequest;
 import com.wasil.ShopSphere.dto.order.OrderResponse;
+import com.wasil.ShopSphere.dto.order.OrderStatusUpdateRequest;
 import com.wasil.ShopSphere.services.OrderService;
 import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.*;
@@ -40,4 +41,12 @@ public class OrderController {
         return orderService.cancelOrder(id);
     }
 
+    @PostMapping("/{userId}/checkout")
+    public OrderResponse checkoutOrder(@PathVariable Long userId) {
+        return orderService.checkoutOrder(userId);
+    }
+    @PutMapping("/{orderId}/status")
+    public OrderResponse updateOrderStatus(@PathVariable Long orderId, @Valid @RequestBody OrderStatusUpdateRequest request) {
+        return orderService.updateOrderStatus(orderId, request);
+    }
 }
