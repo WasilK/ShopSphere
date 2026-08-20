@@ -16,6 +16,8 @@ public class Inventory {
     @JoinColumn(name = "product_id")
     private Product product;
     private Integer currentStock;
+    @Version
+    private Long version;
     @UpdateTimestamp
     private Instant updatedAt;
 }
