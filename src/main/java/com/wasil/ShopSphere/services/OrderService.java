@@ -1,9 +1,6 @@
 package com.wasil.ShopSphere.services;
 
-import com.wasil.ShopSphere.dto.order.OrderItemRequest;
-import com.wasil.ShopSphere.dto.order.OrderItemResponse;
-import com.wasil.ShopSphere.dto.order.OrderRequest;
-import com.wasil.ShopSphere.dto.order.OrderResponse;
+import com.wasil.ShopSphere.dto.order.*;
 import com.wasil.ShopSphere.exceptions.*;
 import com.wasil.ShopSphere.model.*;
 import com.wasil.ShopSphere.repositories.*;
@@ -371,6 +368,47 @@ public class OrderService {
         return convertToResponse(
                 savedOrder,
                 orderItems
+        );
+    }
+
+    @Transactional
+    public OrderResponse updateOrderStatus(
+            Long orderId,
+            OrderStatusUpdateRequest request) {
+
+        OrderStatus newStatus = request.getNewStatus();
+
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() ->
+                        new OrderNotFoundException(
+                                "Order not found with id: " + orderId
+                        ));
+
+        if ((order.getOrderStatus() == OrderStatus.PENDING
+                && newStatus == OrderStatus.CONFIRMED)
+
+                || (order.getOrderStatus() == OrderStatus.CONFIRMED
+                && newStatus == OrderStatus.PROCESSING)
+
+                || (order.getOrderStatus() == OrderStatus.PROCESSING
+                && newStatus == OrderStatus.SHIPPED)
+
+                || (order.getOrderStatus() == OrderStatus.SHIPPED
+                && newStatus == OrderStatus.DELIVERED)) {
+
+            order.setOrderStatus(newStatus);
+
+        } else {
+            throw new OrderStatusCannotBeUpdatedException(
+                    "Order status cannot be updated from "
+                            + order.getOrderStatus()
+                            + " to "
+                            + newStatus
+            );
+        }
+        return convertToResponse(
+                order,
+                orderItemRepository.findByOrder(order)
         );
     }
 

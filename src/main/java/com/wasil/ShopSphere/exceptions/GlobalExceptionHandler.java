@@ -118,4 +118,12 @@ public class GlobalExceptionHandler {
                 .status(HttpStatus.CONFLICT)
                 .body("Inventory was updated by another request. Please try again.");
     }
+    @ExceptionHandler(OrderStatusCannotBeUpdatedException.class)
+    public ResponseEntity<String> handleOrderStatusCannotBeUpdated(
+            OrderStatusCannotBeUpdatedException ex) {
+
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(ex.getMessage());
+    }
 }
