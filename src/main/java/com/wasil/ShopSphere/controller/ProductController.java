@@ -4,8 +4,10 @@ import com.wasil.ShopSphere.dto.product.ProductRequest;
 import com.wasil.ShopSphere.dto.product.ProductResponse;
 import com.wasil.ShopSphere.services.ProductService;
 import jakarta.validation.Valid;
+import org.springframework.data.domain.Page;
 import org.springframework.web.bind.annotation.*;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 @RestController
@@ -38,5 +40,37 @@ public class ProductController {
     @DeleteMapping("/{id}")
     public void deleteProduct(@PathVariable Long id){
         productService.deleteProduct(id);
+    }
+
+    @GetMapping("/page")
+    public Page<ProductResponse> getProducts(@RequestParam int page, @RequestParam int size){
+        return productService.getProducts(page, size);
+    }
+
+    @GetMapping("/search")
+    public Page<ProductResponse> searchAndFilterProducts(
+
+            @RequestParam(required = false)
+            String name,
+
+            @RequestParam(required = false)
+            BigDecimal minPrice,
+
+            @RequestParam(required = false)
+            BigDecimal maxPrice,
+
+            @RequestParam(defaultValue = "0")
+            int page,
+
+            @RequestParam(defaultValue = "20")
+            int size) {
+
+        return productService.searchAndFilterProducts(
+                name,
+                minPrice,
+                maxPrice,
+                page,
+                size
+        );
     }
 }
