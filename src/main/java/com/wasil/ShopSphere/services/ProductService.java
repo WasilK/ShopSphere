@@ -8,8 +8,14 @@ import com.wasil.ShopSphere.model.Inventory;
 import com.wasil.ShopSphere.model.Product;
 import com.wasil.ShopSphere.repositories.InventoryRepository;
 import com.wasil.ShopSphere.repositories.ProductRepository;
+import com.wasil.ShopSphere.specifications.ProductSpecification;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 @Service
@@ -58,7 +64,49 @@ public class ProductService {
         prodRepo.delete(existingProduct);
     }
 
+    public Page<ProductResponse> getProducts(int page, int size){
+        Pageable pageable = PageRequest.of(page, size);
+        Page<Product> productPage = prodRepo.findAll(pageable);
+        return (productPage.map(this::convertToResponse));
+    }
 
+    public Page<ProductResponse> searchAndFilterProducts(
+            String name,
+            BigDecimal minPrice,
+            BigDecimal maxPrice,
+            int page,
+            int size) {
+
+        Pageable pageable =
+                PageRequest.of(page, size);
+
+        Specification<Product> specification =
+                (root, query, criteriaBuilder) -> criteriaBuilder.conjunction();
+
+        if (name != null && !name.isBlank()) {
+            specification = specification.and(
+                    ProductSpecification.hasName(name)
+            );
+        }
+
+        if (minPrice != null) {
+            specification = specification.and(
+                    ProductSpecification.hasMinPrice(minPrice)
+            );
+        }
+
+        if (maxPrice != null) {
+            specification = specification.and(
+                    ProductSpecification.hasMaxPrice(maxPrice)
+            );
+        }
+
+        Page<Product> productPage = prodRepo.findAll(
+                specification,
+                pageable
+        );
+        return productPage.map(this::convertToResponse);
+    }
     private ProductResponse convertToResponse(Product product) {
 
         ProductResponse response = new ProductResponse();
