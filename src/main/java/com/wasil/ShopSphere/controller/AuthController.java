@@ -2,7 +2,10 @@ package com.wasil.ShopSphere.controller;
 
 import com.wasil.ShopSphere.dto.auth.LoginRequest;
 import com.wasil.ShopSphere.dto.auth.LoginResponse;
+import com.wasil.ShopSphere.dto.user.UserRequest;
+import com.wasil.ShopSphere.dto.user.UserResponse;
 import com.wasil.ShopSphere.services.AuthService;
+import com.wasil.ShopSphere.services.UserService;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -12,14 +15,17 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/auth")
 public class AuthController {
     private final AuthService authService;
-    public AuthController(AuthService authService){
+    private final UserService userService;
+    public AuthController(AuthService authService, UserService userService){
         this.authService = authService;
+        this.userService = userService;
     }
     @PostMapping("/login")
-    public LoginResponse login(@RequestBody LoginRequest request){
-        authService.login(request);
-        return new LoginResponse(
-                "Login successful"
-        );
+    public String login(@RequestBody LoginRequest request){
+        return authService.login(request);
+    }
+    @PostMapping("/register")
+    public UserResponse register(@RequestBody UserRequest request){
+        return userService.addUser(request);
     }
 }

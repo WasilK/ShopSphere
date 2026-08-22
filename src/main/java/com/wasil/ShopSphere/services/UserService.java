@@ -32,11 +32,15 @@ public class UserService {
     }
 
     public UserResponse addUser(UserRequest userRequest) {
+        if (userRepository.findByUserEmail(userRequest.getUserEmail()).isPresent()) {
+            throw new RuntimeException("Email already registered");
+        }
         User user = new User();
         user.setUserName(userRequest.getUserName());
         user.setUserEmail(userRequest.getUserEmail());
         user.setUserPassword(passwordEncoder.encode(userRequest.getUserPassword()));
         user.setUserPhone(userRequest.getUserPhone());
+        user.setRole(Role.CUSTOMER);
         User savedUser = userRepository.save(user);
         return convertToResponse(savedUser);
     }
@@ -47,7 +51,6 @@ public class UserService {
         user.setUserEmail(userRequest.getUserEmail());
         user.setUserPassword(passwordEncoder.encode(userRequest.getUserPassword()));
         user.setUserPhone(userRequest.getUserPhone());
-        user.setRole(Role.CUSTOMER);
         User savedUser = userRepository.save(user);
         return convertToResponse(savedUser);
     }
