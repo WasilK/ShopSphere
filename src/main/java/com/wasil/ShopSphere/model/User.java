@@ -23,6 +23,8 @@ public class User {
     private String userPassword;
     private String userEmail;
     private String userPhone;
+    @Enumerated(EnumType.STRING)
+    private Role role;
 
     @CreationTimestamp
     private Instant userCreatedAt;
