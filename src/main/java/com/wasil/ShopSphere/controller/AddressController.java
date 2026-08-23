@@ -34,4 +34,18 @@ public class AddressController {
         String email = authentication.getName();
         return addressService.updateAddress(email, addressRequest, id);
     }
+    @GetMapping("/users/me/{id}")
+    public AddressResponse getAddress(Authentication authentication, @PathVariable Long id){
+        String email = authentication.getName();
+        return addressService.getAddress(email, id);
+    }
+    @GetMapping("/address")
+    public List<AddressResponse> getAllAddresses(){
+        return addressService.getAllAddresses();
+    }
+
+    @GetMapping("/address/{id}")
+    public AddressResponse getAddressById(@PathVariable Long id){
+        return addressService.getAddressById(id);
+    }
 }

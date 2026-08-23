@@ -2,6 +2,8 @@ package com.wasil.ShopSphere.controller;
 
 import com.wasil.ShopSphere.dto.cart.CartResponse;
 import com.wasil.ShopSphere.dto.order.OrderResponse;
+import com.wasil.ShopSphere.dto.user.ChangePasswordRequest;
+import com.wasil.ShopSphere.dto.user.UpdateUserRequest;
 import com.wasil.ShopSphere.dto.user.UserRequest;
 import com.wasil.ShopSphere.dto.user.UserResponse;
 import com.wasil.ShopSphere.services.CartService;
@@ -35,8 +37,16 @@ public class UserController {
          String email = authentication.getName();
         return userService.getUserByEmail(email);
     }
-
-
+    @PutMapping("/me")
+    public UserResponse updateUser(Authentication authentication, @Valid @RequestBody UpdateUserRequest request){
+         String email = authentication.getName();
+         return userService.updateUser(email, request);
+    }
+    @PutMapping("/me/changePassword")
+    public void changePassword(Authentication authentication, @Valid @RequestBody ChangePasswordRequest request){
+         String email = authentication.getName();
+         userService.changePassword(email, request);
+    }
     @GetMapping("/{id}")
     public UserResponse getUserById(@PathVariable Long id){
         return userService.findUserById(id);

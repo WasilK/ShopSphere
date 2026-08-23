@@ -71,7 +71,9 @@ public class SecurityConfig {
                         )
                 )
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/auth/**").permitAll()
+                        .requestMatchers("/auth/login", "/auth/register").permitAll()
+                        .requestMatchers("/auth/logout").authenticated()
+
                         .requestMatchers(HttpMethod.POST, "/products/**")
                         .hasRole("ADMIN")
 
@@ -85,6 +87,8 @@ public class SecurityConfig {
                         .hasRole("CUSTOMER")
                         .requestMatchers("/users/me/**").authenticated()
                         .requestMatchers("/users/**")
+                        .hasRole("ADMIN")
+                        .requestMatchers("/address/**")
                         .hasRole("ADMIN")
 
                         .anyRequest().authenticated()

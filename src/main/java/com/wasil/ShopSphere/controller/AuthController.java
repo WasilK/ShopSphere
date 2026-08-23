@@ -1,12 +1,12 @@
 package com.wasil.ShopSphere.controller;
 
 import com.wasil.ShopSphere.dto.auth.LoginRequest;
-import com.wasil.ShopSphere.dto.auth.LoginResponse;
 import com.wasil.ShopSphere.dto.user.UserRequest;
 import com.wasil.ShopSphere.dto.user.UserResponse;
 import com.wasil.ShopSphere.services.AuthService;
 import com.wasil.ShopSphere.services.UserService;
 import jakarta.validation.Valid;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -28,5 +28,9 @@ public class AuthController {
     @PostMapping("/register")
     public UserResponse register(@Valid @RequestBody UserRequest request){
         return userService.addUser(request);
+    }
+    @PostMapping("/logout")
+    public ResponseEntity<Void> logout() {
+        return ResponseEntity.noContent().build();
     }
 }

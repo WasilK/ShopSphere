@@ -1,9 +1,12 @@
 package com.wasil.ShopSphere.services;
 
 
+import com.wasil.ShopSphere.dto.user.ChangePasswordRequest;
+import com.wasil.ShopSphere.dto.user.UpdateUserRequest;
 import com.wasil.ShopSphere.dto.user.UserRequest;
 import com.wasil.ShopSphere.dto.user.UserResponse;
 import com.wasil.ShopSphere.exceptions.DuplicateResourceException;
+import com.wasil.ShopSphere.exceptions.InvalidPasswordException;
 import com.wasil.ShopSphere.exceptions.UserNotFoundException;
 import com.wasil.ShopSphere.model.Role;
 import com.wasil.ShopSphere.model.User;
@@ -46,6 +49,41 @@ public class UserService {
         user.setRole(Role.CUSTOMER);
         User savedUser = userRepository.save(user);
         return convertToResponse(savedUser);
+    }
+
+    public UserResponse updateUser(String email, UpdateUserRequest request){
+        User user = userRepository.findByUserEmail(email).orElseThrow(() -> new UserNotFoundException("User not found with email: " + email));
+        user.setFirstName(request.getFirstName());
+        user.setLastName(request.getLastName());
+        user.setUserPhone(request.getUserPhone());
+        User savedUser = userRepository.save(user);
+        return convertToResponse(savedUser);
+    }
+
+    public void changePassword(
+            String email,
+            ChangePasswordRequest request) {
+
+        User user = userRepository.findByUserEmail(email)
+                .orElseThrow(() ->
+                        new UserNotFoundException(
+                                "User not found with this email"
+                        ));
+
+        if (!passwordEncoder.matches(
+                request.getCurrentPassword(),
+                user.getUserPassword())) {
+
+            throw new InvalidPasswordException(
+                    "Current password is incorrect"
+            );
+        }
+
+        user.setUserPassword(
+                passwordEncoder.encode(request.getNewPassword())
+        );
+
+        userRepository.save(user);
     }
 
     public UserResponse getUserByEmail(String email){

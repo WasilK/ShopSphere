@@ -59,6 +59,11 @@ public class AddressService {
         List<Address> address = addressRepository.findByUser(user);
         return address.stream().map(this::convertToResponse).toList();
     }
+    public AddressResponse getAddress(String email, Long id){
+        User user = userRepository.findByUserEmail(email).orElseThrow(() -> new UserNotFoundException("User not found with this email."));
+        Address address = addressRepository.findByAddressIdAndUser(id, user).orElseThrow(() -> new AddressNotFoundException("Address not found with the given user and id"));
+        return convertToResponse(address);
+    }
     public void deleteAddress(String email, Long id) {
 
         User user = userRepository.findByUserEmail(email)
@@ -95,6 +100,13 @@ public class AddressService {
         }
         Address savedAddress = addressRepository.save(address);
         return convertToResponse(savedAddress);
+    }
+    public List<AddressResponse> getAllAddresses(){
+        return addressRepository.findAll().stream().map(this::convertToResponse).toList();
+    }
+    public AddressResponse getAddressById(Long id){
+        Address address = addressRepository.findById(id).orElseThrow(() -> new AddressNotFoundException("Address not found with the given id"));
+        return convertToResponse(address);
     }
         private AddressResponse convertToResponse(Address address) {
         return new AddressResponse(
