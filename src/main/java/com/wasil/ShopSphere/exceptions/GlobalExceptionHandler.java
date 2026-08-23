@@ -1,5 +1,7 @@
 package com.wasil.ShopSphere.exceptions;
 
+import com.wasil.ShopSphere.dto.error.ErrorResponse;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -8,122 +10,239 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 
+
 @RestControllerAdvice
 public class GlobalExceptionHandler {
-    @ExceptionHandler(ProductNotFoundException.class)
-    public ResponseEntity<String> handleProductNotFound(
-            ProductNotFoundException ex) {
 
-        return ResponseEntity
-                .status(HttpStatus.NOT_FOUND)
-                .body(ex.getMessage());
+    @ExceptionHandler(ProductNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleProductNotFound(
+            ProductNotFoundException ex,
+            HttpServletRequest request) {
+
+        return buildErrorResponse(
+                HttpStatus.NOT_FOUND,
+                "PRODUCT_NOT_FOUND",
+                ex.getMessage(),
+                request
+        );
     }
 
     @ExceptionHandler(UserNotFoundException.class)
-    public ResponseEntity<String> handleUserNotFound(
-            UserNotFoundException ex
-    ){
-        return ResponseEntity
-                .status(HttpStatus.NOT_FOUND)
-                .body(ex.getMessage());
+    public ResponseEntity<ErrorResponse> handleUserNotFound(
+            UserNotFoundException ex,
+            HttpServletRequest request) {
+
+        return buildErrorResponse(
+                HttpStatus.NOT_FOUND,
+                "USER_NOT_FOUND",
+                ex.getMessage(),
+                request
+        );
     }
 
+    @ExceptionHandler(OrderNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleOrderNotFound(
+            OrderNotFoundException ex,
+            HttpServletRequest request) {
+
+        return buildErrorResponse(
+                HttpStatus.NOT_FOUND,
+                "ORDER_NOT_FOUND",
+                ex.getMessage(),
+                request
+        );
+    }
+
+    @ExceptionHandler(InventoryNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleInventoryNotFound(
+            InventoryNotFoundException ex,
+            HttpServletRequest request) {
+
+        return buildErrorResponse(
+                HttpStatus.NOT_FOUND,
+                "INVENTORY_NOT_FOUND",
+                ex.getMessage(),
+                request
+        );
+    }
+
+    @ExceptionHandler(CartNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleCartNotFound(
+            CartNotFoundException ex,
+            HttpServletRequest request) {
+
+        return buildErrorResponse(
+                HttpStatus.NOT_FOUND,
+                "CART_NOT_FOUND",
+                ex.getMessage(),
+                request
+        );
+    }
+
+    @ExceptionHandler(CartItemNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleCartItemNotFound(
+            CartItemNotFoundException ex,
+            HttpServletRequest request) {
+
+        return buildErrorResponse(
+                HttpStatus.NOT_FOUND,
+                "CART_ITEM_NOT_FOUND",
+                ex.getMessage(),
+                request
+        );
+    }
+
+    @ExceptionHandler(InsufficientStockException.class)
+    public ResponseEntity<ErrorResponse> handleInsufficientStock(
+            InsufficientStockException ex,
+            HttpServletRequest request) {
+
+        return buildErrorResponse(
+                HttpStatus.CONFLICT,
+                "INSUFFICIENT_STOCK",
+                ex.getMessage(),
+                request
+        );
+    }
+
+    @ExceptionHandler(CartEmptyException.class)
+    public ResponseEntity<ErrorResponse> handleCartEmpty(
+            CartEmptyException ex,
+            HttpServletRequest request) {
+
+        return buildErrorResponse(
+                HttpStatus.BAD_REQUEST,
+                "CART_EMPTY",
+                ex.getMessage(),
+                request
+        );
+    }
+
+    @ExceptionHandler(OrderCannotBeCancelled.class)
+    public ResponseEntity<ErrorResponse> handleOrderCannotBeCancelled(
+            OrderCannotBeCancelled ex,
+            HttpServletRequest request) {
+
+        return buildErrorResponse(
+                HttpStatus.BAD_REQUEST,
+                "ORDER_CANNOT_BE_CANCELLED",
+                ex.getMessage(),
+                request
+        );
+    }
+
+    @ExceptionHandler(OrderStatusCannotBeUpdatedException.class)
+    public ResponseEntity<ErrorResponse> handleOrderStatusCannotBeUpdated(
+            OrderStatusCannotBeUpdatedException ex,
+            HttpServletRequest request) {
+
+        return buildErrorResponse(
+                HttpStatus.CONFLICT,
+                "ORDER_CANNOT_BE_UPDATED",
+                ex.getMessage(),
+                request
+        );
+    }
+
+    @ExceptionHandler(ObjectOptimisticLockingFailureException.class)
+    public ResponseEntity<ErrorResponse> handleOptimisticLocking(
+            ObjectOptimisticLockingFailureException ex,
+            HttpServletRequest request) {
+
+        return buildErrorResponse(
+                HttpStatus.CONFLICT,
+                "OPTIMISTIC_LOCK_ERROR",
+                "The resource was modified by another request. Please try again.",
+                request
+        );
+    }
+
+    @ExceptionHandler(DuplicateResourceException.class)
+    public ResponseEntity<ErrorResponse> handleDuplicateResource(
+            DuplicateResourceException ex,
+            HttpServletRequest request) {
+
+        return buildErrorResponse(
+                HttpStatus.CONFLICT,
+                "DUPLICATE_RESOURCE",
+                ex.getMessage(),
+                request
+        );
+    }
+
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<ErrorResponse> handleInvalidFormat(
+            HttpMessageNotReadableException ex,
+            HttpServletRequest request) {
+
+        return buildErrorResponse(
+                HttpStatus.BAD_REQUEST,
+                "INVALID_REQUEST_BODY",
+                "Request body contains invalid or incorrectly formatted data.",
+                request
+        );
+    }
+    @ExceptionHandler(AddressNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleAddressNotFound(
+            CartItemNotFoundException ex,
+            HttpServletRequest request) {
+
+        return buildErrorResponse(
+                HttpStatus.NOT_FOUND,
+                "ADDRESS_NOT_FOUND",
+                ex.getMessage(),
+                request
+        );
+    }
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<Map<String, String>> handleValidationErrors(
-            MethodArgumentNotValidException ex) {
+    public ResponseEntity<ErrorResponse> handleValidationErrors(
+            MethodArgumentNotValidException ex,
+            HttpServletRequest request) {
 
         Map<String, String> errors = new HashMap<>();
 
         ex.getBindingResult()
                 .getFieldErrors()
                 .forEach(error ->
-                        errors.put(error.getField(), error.getDefaultMessage())
+                        errors.put(
+                                error.getField(),
+                                error.getDefaultMessage()
+                        )
                 );
 
-        return ResponseEntity
-                .status(HttpStatus.BAD_REQUEST)
-                .body(errors);
-    }
-    @ExceptionHandler(OrderNotFoundException.class)
-    public ResponseEntity<?> handleOrderNotFound(
-            OrderNotFoundException ex) {
-
-        return ResponseEntity
-                .status(HttpStatus.NOT_FOUND)
-                .body(ex.getMessage());
-    }
-    @ExceptionHandler(InsufficientStockException.class)
-    public ResponseEntity<?> handleInsufficientStock(
-            InsufficientStockException ex) {
-        return ResponseEntity
-                .status(HttpStatus.CONFLICT)
-                .body(ex.getMessage());
-    }
-    @ExceptionHandler(OrderCannotBeCancelled.class)
-    public ResponseEntity<?> handleOrderCannotBeCancelled(OrderCannotBeCancelled ex) {
-        return ResponseEntity
-                .status(HttpStatus.BAD_REQUEST)
-                .body(ex.getMessage());
-    }
-    @ExceptionHandler(HttpMessageNotReadableException.class)
-    public ResponseEntity<Map<String, String>> handleInvalidFormat(
-            HttpMessageNotReadableException ex) {
-
-        Map<String, String> error = new HashMap<>();
-
-        error.put("error", "Invalid request data type");
+        ErrorResponse errorResponse = new ErrorResponse(
+                LocalDateTime.now(),
+                HttpStatus.BAD_REQUEST.value(),
+                "VALIDATION_ERROR",
+                errors,
+                request.getRequestURI()
+        );
 
         return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
-                .body(error);
+                .body(errorResponse);
     }
-    @ExceptionHandler(InventoryNotFoundException.class)
-    public ResponseEntity<String> handleInventoryNotFound(
-            InventoryNotFoundException ex) {
+
+    private ResponseEntity<ErrorResponse> buildErrorResponse(
+            HttpStatus status,
+            String error,
+            String message,
+            HttpServletRequest request) {
+
+        ErrorResponse errorResponse = new ErrorResponse(
+                LocalDateTime.now(),
+                status.value(),
+                error,
+                message,
+                request.getRequestURI()
+        );
 
         return ResponseEntity
-                .status(HttpStatus.NOT_FOUND)
-                .body(ex.getMessage());
-    }
-    @ExceptionHandler(CartNotFoundException.class)
-    public ResponseEntity<String> handleCartNotFound(
-            CartNotFoundException ex) {
-
-        return ResponseEntity
-                .status(HttpStatus.NOT_FOUND)
-                .body(ex.getMessage());
-    }
-    @ExceptionHandler(CartItemNotFoundException.class)
-    public ResponseEntity<String> handleCartItemNotFound(CartItemNotFoundException ex) {
-        return ResponseEntity
-                .status(HttpStatus.NOT_FOUND)
-                .body(ex.getMessage());
-    }
-    @ExceptionHandler(CartEmptyException.class)
-    public ResponseEntity<String> handleCartEmpty(
-            CartEmptyException ex
-    ){
-        return ResponseEntity
-                .status(HttpStatus.BAD_REQUEST)
-                .body(ex.getMessage());
-    }
-    @ExceptionHandler(ObjectOptimisticLockingFailureException.class)
-    public ResponseEntity<String> handleOptimisticLocking(
-            ObjectOptimisticLockingFailureException ex) {
-
-        return ResponseEntity
-                .status(HttpStatus.CONFLICT)
-                .body("Inventory was updated by another request. Please try again.");
-    }
-    @ExceptionHandler(OrderStatusCannotBeUpdatedException.class)
-    public ResponseEntity<String> handleOrderStatusCannotBeUpdated(
-            OrderStatusCannotBeUpdatedException ex) {
-
-        return ResponseEntity
-                .status(HttpStatus.BAD_REQUEST)
-                .body(ex.getMessage());
+                .status(status)
+                .body(errorResponse);
     }
 }

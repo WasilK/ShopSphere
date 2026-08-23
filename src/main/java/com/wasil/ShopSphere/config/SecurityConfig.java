@@ -2,6 +2,7 @@ package com.wasil.ShopSphere.config;
 
 import com.wasil.ShopSphere.security.CustomUserDetailsService;
 import com.wasil.ShopSphere.security.JwtAuthenticationFilter;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -15,6 +16,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
+
 @Configuration
 public class SecurityConfig {
     private final CustomUserDetailsService userDetailsService;
@@ -24,10 +26,12 @@ public class SecurityConfig {
         this.userDetailsService = userDetailsService;
         this.jwtAuthenticationFilter = jwtAuthenticationFilter;
     }
+
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
+
     @Bean
     public AuthenticationProvider authenticationProvider() {
 
@@ -38,6 +42,7 @@ public class SecurityConfig {
 
         return provider;
     }
+
     @Bean
     public AuthenticationManager authenticationManager(
             AuthenticationConfiguration configuration)
@@ -45,12 +50,26 @@ public class SecurityConfig {
 
         return configuration.getAuthenticationManager();
     }
+
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http)
             throws Exception {
 
         http
                 .csrf(csrf -> csrf.disable())
+                .exceptionHandling(exception -> exception
+                        .authenticationEntryPoint(
+                                (request, response, authException) -> {
+                                    response.setStatus(
+                                            HttpServletResponse.SC_UNAUTHORIZED
+                                    );
+                                    response.setContentType("application/json");
+                                    response.getWriter().write(
+                                            "{\"status\":401,\"message\":\"Authentication required\"}"
+                                    );
+                                }
+                        )
+                )
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/auth/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/products/**")
@@ -64,9 +83,9 @@ public class SecurityConfig {
 
                         .requestMatchers("/cart/**")
                         .hasRole("CUSTOMER")
-
+                        .requestMatchers("/users/me/**").authenticated()
                         .requestMatchers("/users/**")
-                        .permitAll()
+                        .hasRole("ADMIN")
 
                         .anyRequest().authenticated()
                 )
@@ -78,3 +97,4 @@ public class SecurityConfig {
         return http.build();
     }
 }
+

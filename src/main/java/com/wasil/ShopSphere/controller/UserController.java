@@ -8,6 +8,7 @@ import com.wasil.ShopSphere.services.CartService;
 import com.wasil.ShopSphere.services.OrderService;
 import com.wasil.ShopSphere.services.UserService;
 import jakarta.validation.Valid;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -29,6 +30,13 @@ public class UserController {
         return userService.findAllUsers();
     }
 
+    @GetMapping("/me")
+    public UserResponse getMyProfile(Authentication authentication){
+         String email = authentication.getName();
+        return userService.getUserByEmail(email);
+    }
+
+
     @GetMapping("/{id}")
     public UserResponse getUserById(@PathVariable Long id){
         return userService.findUserById(id);
@@ -39,10 +47,6 @@ public class UserController {
         return userService.addUser(userRequest);
     }
 
-    @PutMapping("/{id}")
-    public UserResponse updateUser(@PathVariable Long id, @Valid @RequestBody UserRequest userRequest){
-        return userService.updateUser(id, userRequest);
-    }
 
     @DeleteMapping("/{id}")
     public void deleteUser(@PathVariable Long id){

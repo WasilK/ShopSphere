@@ -8,13 +8,20 @@ import lombok.Data;
 
 @Data
 public class UserRequest {
-    @NotBlank(message = "User name is required")
-    @Size(min = 3, max = 30, message = "Username must be between 3 and 30 characters")
+    @NotBlank(message = "First name is required")
+    @Size(min = 3, max = 30, message = "First name must be between 3 and 30 characters")
     @Pattern(
-            regexp = "^[a-zA-Z]+$",
-            message = "Username must contain only letters"
+            regexp = "^[a-zA-Z]+(?: [A-Za-z]+)*$",
+            message = "First name must contain only letters"
     )
-    private String userName;
+    private String firstName;
+    @NotBlank(message = "Last name is required")
+    @Size(min = 3, max = 30, message = "Last name must be between 3 and 30 characters")
+    @Pattern(
+            regexp = "^[a-zA-Z]*$",
+            message = "Last name must contain only letters"
+    )
+    private String lastName;
 
     @NotBlank(message = "Email is required.")
     @Email(message = "Invalid email format")
