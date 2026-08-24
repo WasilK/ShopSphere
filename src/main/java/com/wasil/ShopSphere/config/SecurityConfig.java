@@ -80,6 +80,18 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.PUT, "/products/**")
                         .hasRole("ADMIN")
 
+                        .requestMatchers(HttpMethod.DELETE, "/products/**")
+                        .hasRole("ADMIN")
+
+                        .requestMatchers(HttpMethod.DELETE, "/category/**")
+                        .hasRole("ADMIN")
+
+                        .requestMatchers(HttpMethod.PUT, "/category/**")
+                        .hasRole("ADMIN")
+
+                        .requestMatchers(HttpMethod.POST, "/category/**")
+                        .hasRole("ADMIN")
+
                         .requestMatchers("/inventory/**")
                         .hasRole("ADMIN")
 

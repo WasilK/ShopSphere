@@ -23,10 +23,6 @@ public class ProductController {
         return productService.addProduct(productRequest);
     }
 
-    @GetMapping
-    public List<ProductResponse> getAllProducts(){
-        return productService.getAllProducts();
-    }
     @GetMapping("/{id}")
     public ProductResponse getProductById(@PathVariable Long id){
         return productService.getProductById(id);
@@ -42,35 +38,27 @@ public class ProductController {
         productService.deleteProduct(id);
     }
 
-    @GetMapping("/page")
-    public Page<ProductResponse> getProducts(@RequestParam int page, @RequestParam int size){
-        return productService.getProducts(page, size);
-    }
 
-    @GetMapping("/search")
-    public Page<ProductResponse> searchAndFilterProducts(
-
-            @RequestParam(required = false)
-            String name,
-
-            @RequestParam(required = false)
-            BigDecimal minPrice,
-
-            @RequestParam(required = false)
-            BigDecimal maxPrice,
-
-            @RequestParam(defaultValue = "0")
-            int page,
-
-            @RequestParam(defaultValue = "20")
-            int size) {
+    @GetMapping
+    public Page<ProductResponse> getProducts(
+            @RequestParam(required = false) String name,
+            @RequestParam(required = false) BigDecimal minPrice,
+            @RequestParam(required = false) BigDecimal maxPrice,
+            @RequestParam(required = false) Long categoryId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "prodCreatedAt") String sortBy,
+            @RequestParam(defaultValue = "desc") String direction) {
 
         return productService.searchAndFilterProducts(
                 name,
                 minPrice,
                 maxPrice,
+                categoryId,
                 page,
-                size
+                size,
+                sortBy,
+                direction
         );
     }
 }

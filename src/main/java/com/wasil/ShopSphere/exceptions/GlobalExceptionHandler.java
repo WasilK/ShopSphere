@@ -160,7 +160,23 @@ public class GlobalExceptionHandler {
                 request
         );
     }
+    @ExceptionHandler(InvalidSortFieldException.class)
+    public ResponseEntity<ErrorResponse> handleInvalidSortField(
+            InvalidSortFieldException ex,
+            HttpServletRequest request) {
 
+        ErrorResponse error = new ErrorResponse(
+                LocalDateTime.now(),
+                HttpStatus.BAD_REQUEST.value(),
+                "INVALID_SORT_FIELD",
+                ex.getMessage(),
+                request.getRequestURI()
+        );
+
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(error);
+    }
     @ExceptionHandler(DuplicateResourceException.class)
     public ResponseEntity<ErrorResponse> handleDuplicateResource(
             DuplicateResourceException ex,
@@ -172,6 +188,23 @@ public class GlobalExceptionHandler {
                 ex.getMessage(),
                 request
         );
+    }
+    @ExceptionHandler(InvalidPriceRangeException.class)
+    public ResponseEntity<ErrorResponse> handleInvalidPriceRange(
+            InvalidPriceRangeException ex,
+            HttpServletRequest request) {
+
+        ErrorResponse error = new ErrorResponse(
+                LocalDateTime.now(),
+                HttpStatus.BAD_REQUEST.value(),
+                "INVALID_PRICE_RANGE",
+                ex.getMessage(),
+                request.getRequestURI()
+        );
+
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(error);
     }
 
     @ExceptionHandler(HttpMessageNotReadableException.class)
@@ -188,7 +221,7 @@ public class GlobalExceptionHandler {
     }
     @ExceptionHandler(AddressNotFoundException.class)
     public ResponseEntity<ErrorResponse> handleAddressNotFound(
-            CartItemNotFoundException ex,
+            AddressNotFoundException ex,
             HttpServletRequest request) {
 
         return buildErrorResponse(
@@ -198,9 +231,21 @@ public class GlobalExceptionHandler {
                 request
         );
     }
+    @ExceptionHandler(CategoryNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleAddressNotFound(
+            CategoryNotFoundException ex,
+            HttpServletRequest request) {
+
+        return buildErrorResponse(
+                HttpStatus.NOT_FOUND,
+                "CATEGORY_NOT_FOUND",
+                ex.getMessage(),
+                request
+        );
+    }
     @ExceptionHandler(InvalidPasswordException.class)
     public ResponseEntity<ErrorResponse> handleInvalidPassword(
-            CartItemNotFoundException ex,
+            InvalidPasswordException ex,
             HttpServletRequest request) {
 
         return buildErrorResponse(
@@ -209,6 +254,40 @@ public class GlobalExceptionHandler {
                 ex.getMessage(),
                 request
         );
+    }
+    @ExceptionHandler(CategoryInactiveException.class)
+    public ResponseEntity<ErrorResponse> handleCategoryInactive(
+            CategoryInactiveException ex,
+            HttpServletRequest request) {
+
+        ErrorResponse error = new ErrorResponse(
+                LocalDateTime.now(),
+                HttpStatus.CONFLICT.value(),
+                "CATEGORY_INACTIVE",
+                ex.getMessage(),
+                request.getRequestURI()
+        );
+
+        return ResponseEntity
+                .status(HttpStatus.CONFLICT)
+                .body(error);
+    }
+    @ExceptionHandler(InvalidPaginationException.class)
+    public ResponseEntity<ErrorResponse> handleInvalidPagination(
+            InvalidPaginationException ex,
+            HttpServletRequest request) {
+
+        ErrorResponse error = new ErrorResponse(
+                LocalDateTime.now(),
+                HttpStatus.BAD_REQUEST.value(),
+                "INVALID_PAGINATION",
+                ex.getMessage(),
+                request.getRequestURI()
+        );
+
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(error);
     }
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ErrorResponse> handleValidationErrors(
