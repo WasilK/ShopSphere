@@ -3,9 +3,7 @@ package com.wasil.ShopSphere.services;
 
 import com.wasil.ShopSphere.dto.product.ProductRequest;
 import com.wasil.ShopSphere.dto.product.ProductResponse;
-import com.wasil.ShopSphere.exceptions.CategoryInactiveException;
-import com.wasil.ShopSphere.exceptions.CategoryNotFoundException;
-import com.wasil.ShopSphere.exceptions.ProductNotFoundException;
+import com.wasil.ShopSphere.exceptions.*;
 import com.wasil.ShopSphere.model.Category;
 import com.wasil.ShopSphere.model.Inventory;
 import com.wasil.ShopSphere.model.Product;
@@ -16,17 +14,24 @@ import com.wasil.ShopSphere.specifications.ProductSpecification;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
-import java.util.List;
+import java.util.Set;
 
 @Service
 public class ProductService {
     private final ProductRepository prodRepo;
     private final InventoryRepository inventoryRepository;
     private final CategoryRepository categoryRepository;
+
+    private static final Set<String> ALLOWED_SORT_FIELDS = Set.of(
+            "prodName",
+            "prodPrice",
+            "prodCreatedAt"
+    );
 
     public ProductService(ProductRepository prodRepo, InventoryRepository inventoryRepository, CategoryRepository categoryRepository) {
         this.prodRepo = prodRepo;
@@ -62,9 +67,6 @@ public class ProductService {
        return convertToResponse(savedProduct);
     }
 
-    public List<ProductResponse> getAllProducts(){
-        return prodRepo.findAll().stream().map(this::convertToResponse).toList();
-    }
 
     public ProductResponse getProductById(Long id){
         Product product = prodRepo.findById(id).orElseThrow(() -> new ProductNotFoundException("Product not found with id :" + id));
@@ -94,47 +96,93 @@ public class ProductService {
         prodRepo.save(existingProduct);
     }
 
-    public Page<ProductResponse> getProducts(int page, int size){
-        Pageable pageable = PageRequest.of(page, size);
-        Page<Product> productPage = prodRepo.findAll(pageable);
-        return (productPage.map(this::convertToResponse));
-    }
 
     public Page<ProductResponse> searchAndFilterProducts(
             String name,
             BigDecimal minPrice,
             BigDecimal maxPrice,
+            Long categoryId,
             int page,
-            int size) {
+            int size,
+            String sortBy,
+            String direction) {
 
-        Pageable pageable =
-                PageRequest.of(page, size);
+        if (page < 0) {
+            throw new InvalidPaginationException(
+                    "Page must be greater than or equal to 0"
+            );
+        }
+
+        if (size < 1 || size > 100) {
+            throw new InvalidPaginationException(
+                    "Page size must be between 1 and 100"
+            );
+        }
+
+        Sort.Direction sortDirection =
+                direction.equalsIgnoreCase("desc")
+                        ? Sort.Direction.DESC
+                        : Sort.Direction.ASC;
+
+        if (minPrice != null
+                && maxPrice != null
+                && minPrice.compareTo(maxPrice) > 0) {
+
+            throw new InvalidPriceRangeException(
+                    "Minimum price cannot be greater than maximum price"
+            );
+        }
+
+        if (!ALLOWED_SORT_FIELDS.contains(sortBy)) {
+            throw new InvalidSortFieldException(
+                    "Invalid sort field: " + sortBy
+            );
+        }
+
+        Pageable pageable = PageRequest.of(
+                page,
+                size,
+                Sort.by(sortDirection, sortBy)
+        );
+
 
         Specification<Product> specification =
-                (root, query, criteriaBuilder) -> criteriaBuilder.conjunction();
+                ProductSpecification.isActive();
 
         if (name != null && !name.isBlank()) {
+
             specification = specification.and(
                     ProductSpecification.hasName(name)
             );
         }
 
         if (minPrice != null) {
+
             specification = specification.and(
                     ProductSpecification.hasMinPrice(minPrice)
             );
         }
 
         if (maxPrice != null) {
+
             specification = specification.and(
                     ProductSpecification.hasMaxPrice(maxPrice)
             );
         }
 
-        Page<Product> productPage = prodRepo.findAll(
-                specification,
-                pageable
-        );
+        if (categoryId != null) {
+
+            specification = specification.and(
+                    ProductSpecification.hasCategory(categoryId)
+            );
+        }
+
+        Page<Product> productPage =
+                prodRepo.findAll(
+                        specification,
+                        pageable
+                );
+
         return productPage.map(this::convertToResponse);
     }
     private ProductResponse convertToResponse(Product product) {

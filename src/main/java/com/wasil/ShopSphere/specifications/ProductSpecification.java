@@ -34,4 +34,19 @@ public class ProductSpecification {
                 )
                 );
     }
+    public static Specification<Product> hasCategory(
+            Long categoryId) {
+
+        return (root, query, criteriaBuilder) ->
+                criteriaBuilder.equal(
+                        root.get("category").get("categoryId"),
+                        categoryId
+                );
+    }
+
+    public static Specification<Product> isActive() {
+
+        return (root, query, criteriaBuilder) ->
+                criteriaBuilder.isTrue(root.get("prodIsActive"));
+    }
 }

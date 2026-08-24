@@ -2,6 +2,7 @@ package com.wasil.ShopSphere.controller;
 
 import com.wasil.ShopSphere.dto.product.CategoryResponse;
 import com.wasil.ShopSphere.services.CategoryService;
+import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.*;
 import com.wasil.ShopSphere.dto.product.CategoryRequest;
 
@@ -23,11 +24,11 @@ public class CategoryController {
         return categoryService.getCategoryById(id);
     }
     @PostMapping
-    public CategoryResponse createCategory(@RequestBody CategoryRequest categoryRequest){
+    public CategoryResponse createCategory(@RequestBody @Valid CategoryRequest categoryRequest){
         return categoryService.createCategory(categoryRequest);
     }
     @PutMapping("/{id}")
-    public CategoryResponse updateCategory(@PathVariable Long id,@RequestBody CategoryRequest request){
+    public CategoryResponse updateCategory(@PathVariable Long id, @Valid @RequestBody CategoryRequest request){
         return categoryService.updateCategory(id, request);
     }
     @DeleteMapping("/{id}")
