@@ -1,11 +1,15 @@
 package com.wasil.ShopSphere.services;
 
-import com.wasil.ShopSphere.dto.inventory.InventoryResponse;
+
 import com.wasil.ShopSphere.dto.product.ProductRequest;
 import com.wasil.ShopSphere.dto.product.ProductResponse;
+import com.wasil.ShopSphere.exceptions.CategoryInactiveException;
+import com.wasil.ShopSphere.exceptions.CategoryNotFoundException;
 import com.wasil.ShopSphere.exceptions.ProductNotFoundException;
+import com.wasil.ShopSphere.model.Category;
 import com.wasil.ShopSphere.model.Inventory;
 import com.wasil.ShopSphere.model.Product;
+import com.wasil.ShopSphere.repositories.CategoryRepository;
 import com.wasil.ShopSphere.repositories.InventoryRepository;
 import com.wasil.ShopSphere.repositories.ProductRepository;
 import com.wasil.ShopSphere.specifications.ProductSpecification;
@@ -22,17 +26,34 @@ import java.util.List;
 public class ProductService {
     private final ProductRepository prodRepo;
     private final InventoryRepository inventoryRepository;
+    private final CategoryRepository categoryRepository;
 
-    public ProductService(ProductRepository prodRepo, InventoryRepository inventoryRepository) {
+    public ProductService(ProductRepository prodRepo, InventoryRepository inventoryRepository, CategoryRepository categoryRepository) {
         this.prodRepo = prodRepo;
         this.inventoryRepository = inventoryRepository;
+        this.categoryRepository = categoryRepository;
     }
 
     public ProductResponse addProduct(ProductRequest productRequest) {
+        Category category = categoryRepository
+                .findById(productRequest.getCategoryId())
+                .orElseThrow(() ->
+                        new CategoryNotFoundException(
+                                "Category not found with id: "
+                                        + productRequest.getCategoryId()
+                        ));
+        if (!category.getCategoryIsActive()) {
+            throw new CategoryInactiveException(
+                    "Cannot create product under an inactive category"
+            );
+        }
        Product product = new Product();
        product.setProdName(productRequest.getProdName());
        product.setProdPrice(productRequest.getProdPrice());
        product.setProdDescription(productRequest.getProdDescription());
+       product.setProdIsActive(true);
+       product.setCategory(category);
+
        Product savedProduct =  prodRepo.save(product);
        Inventory inventory = new Inventory();
        inventory.setProduct(savedProduct);
@@ -51,17 +72,26 @@ public class ProductService {
     }
 
     public ProductResponse updateProduct(Long id, ProductRequest productRequest){
+        Category category = categoryRepository
+                .findById(productRequest.getCategoryId())
+                .orElseThrow(() ->
+                        new CategoryNotFoundException(
+                                "Category not found with id: "
+                                        + productRequest.getCategoryId()
+                        ));
         Product existingProduct = prodRepo.findById(id).orElseThrow(() -> new ProductNotFoundException("Product not found with id :" + id));
         existingProduct.setProdName(productRequest.getProdName());
         existingProduct.setProdPrice(productRequest.getProdPrice());
         existingProduct.setProdDescription(productRequest.getProdDescription());
+        existingProduct.setCategory(category);
         Product updatedProduct = prodRepo.save(existingProduct);
         return convertToResponse(updatedProduct);
     }
 
     public void deleteProduct(Long id){
         Product existingProduct = prodRepo.findById(id).orElseThrow(() -> new ProductNotFoundException("Product not found with id :" + id));
-        prodRepo.delete(existingProduct);
+        existingProduct.setProdIsActive(false);
+        prodRepo.save(existingProduct);
     }
 
     public Page<ProductResponse> getProducts(int page, int size){
@@ -117,7 +147,9 @@ public class ProductService {
         response.setProdDescription(product.getProdDescription());
         response.setProdCreatedAt(product.getProdCreatedAt());
         response.setProdUpdatedAt(product.getProdUpdatedAt());
-
+        response.setProdIsActive(product.getProdIsActive());
+        response.setCategoryId(product.getCategory().getCategoryId());
+        response.setCategoryName(product.getCategory().getCategoryName());
         return response;
     }
 

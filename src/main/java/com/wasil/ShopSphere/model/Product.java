@@ -1,10 +1,8 @@
 package com.wasil.ShopSphere.model;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
@@ -28,9 +26,15 @@ public class Product {
 
     private String prodDescription;
 
+    @Column(nullable = false)
+    private Boolean prodIsActive;
+
     @CreationTimestamp
     private Instant prodCreatedAt;
     @UpdateTimestamp
     private Instant prodUpdatedAt;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "category_id", nullable = false)
+    private Category category;
 }
