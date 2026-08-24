@@ -77,8 +77,7 @@ public class AddressService {
                         new AddressNotFoundException(
                                 "Address not found."
                         ));
-
-        addressRepository.delete(address);
+        user.getAddresses().remove(address);
     }
     public AddressResponse updateAddress(String email, AddressRequest addressRequest, Long id){
         User user = userRepository.findByUserEmail(email).orElseThrow(() -> new UserNotFoundException("User not found with this email."));
