@@ -30,15 +30,13 @@ public class CartService {
         this.inventoryRepository = inventoryRepository;
     }
     @Transactional
-    public CartResponse addToCart(Long userId, AddToCartRequest request) {
-
+    public CartResponse addToCart(String email, AddToCartRequest request) {
         // 1. Find User
-        User user = userRepository.findById(userId)
+        User user = userRepository.findByUserEmail(email)
                 .orElseThrow(() ->
                         new UserNotFoundException(
-                                "User not found with id: " + userId
+                                "User not found with email: " + email
                         ));
-
         // 2. Find Product
         Product product = productRepository.findById(request.getProductId())
                 .orElseThrow(() ->
@@ -46,7 +44,9 @@ public class CartService {
                                 "Product not found with id: "
                                         + request.getProductId()
                         ));
-
+        if(!product.getProdIsActive()){
+            throw new ProductInActiveException("Product is inactive it cannot be added to cart.");
+        }
         // 3. Find Inventory
         Inventory inventory = inventoryRepository.findByProduct(product)
                 .orElseThrow(() ->
@@ -111,40 +111,24 @@ public class CartService {
         return convertToCartResponse(cart, cartItems);
     }
     @Transactional
-    public CartResponse getCartByUser(Long userId) {
-        User user = userRepository.findById(userId)
+    public CartResponse updateCartItemQuantity(
+            String email,
+            Long prodId,
+            UpdateCartItemRequest request) {
+        User user = userRepository.findByUserEmail(email)
                 .orElseThrow(() ->
                         new UserNotFoundException(
-                                "User not found with id: " + userId
+                                "User not found with id: " + email
                         ));
-
-        Cart cart = cartRepository.findByUser(user)
-                .orElseThrow(() ->
-                        new CartNotFoundException(
-                                "Cart not found for user with id: " + userId
-                        ));
-
-        List<CartItem> cartItems = cartItemRepository.findByCart(cart);
-
-        return convertToCartResponse(cart, cartItems);
-    }
-    @Transactional
-    public CartResponse updateCartItemQuantity(
-            Long cartItemId,
-            UpdateCartItemRequest request) {
-
+        Product product = productRepository.findById(prodId).orElseThrow(() -> new ProductNotFoundException("Product not found with id: " + prodId));
         // 1. Find CartItem
-        CartItem cartItem = cartItemRepository.findById(cartItemId)
+        Cart cart = cartRepository.findByUser(user).orElseThrow(() -> new CartNotFoundException("Cart not found for this user " + email));
+
+        CartItem cartItem = cartItemRepository.findByCartAndProduct(cart, product)
                 .orElseThrow(() ->
                         new CartItemNotFoundException(
-                                "Cart item not found with id: " + cartItemId
+                                "Cart item not found with id: " + prodId
                         ));
-
-        // 2. Get Cart
-        Cart cart = cartItem.getCart();
-
-        // 3. Get Product
-        Product product = cartItem.getProduct();
 
         // 4. Get Inventory
         Inventory inventory = inventoryRepository.findByProduct(product)
@@ -175,35 +159,46 @@ public class CartService {
         return convertToCartResponse(cart, cartItems);
     }
     @Transactional
-    public CartResponse removeCartItem(Long cartItemId){
-        CartItem cartItem = cartItemRepository.findById(cartItemId)
+    public CartResponse removeCartItem(String email, Long prodId){
+        User user = userRepository.findByUserEmail(email).orElseThrow(() -> new UserNotFoundException("User not found with this email."));
+
+        Product product = productRepository.findById(prodId).orElseThrow(() -> new ProductNotFoundException("Product not found with id: " + prodId));
+        // 1. Find CartItem
+        Cart cart = cartRepository.findByUser(user).orElseThrow(() -> new CartNotFoundException("Cart not found for this user " + email));
+
+        CartItem cartItem = cartItemRepository.findByCartAndProduct(cart, product)
                 .orElseThrow(() ->
                         new CartItemNotFoundException(
-                                "Cart item not found with id: " + cartItemId
+                                "Cart item not found with id: " + prodId
                         ));
-        Cart cart = cartItem.getCart();
         cartItemRepository.delete(cartItem);
         return convertToCartResponse(cart, cartItemRepository.findByCart(cart));
     }
     @Transactional
-    public CartResponse clearCart(Long userId) {
+    public CartResponse clearCart(String email) {
 
-        User user = userRepository.findById(userId)
+        User user = userRepository.findByUserEmail(email)
                 .orElseThrow(() ->
                         new UserNotFoundException(
-                                "User not found with id: " + userId
+                                "User not found with email: " + email
                         ));
 
         Cart cart = cartRepository.findByUser(user)
                 .orElseThrow(() ->
                         new CartNotFoundException(
-                                "Cart not found for user with id: " + userId
+                                "Cart not found for user with email: " + email
                         ));
 
         cart.getCartItems().clear();
 
         cartRepository.save(cart);
 
+        return convertToCartResponse(cart, cartItemRepository.findByCart(cart));
+    }
+    @Transactional
+    public CartResponse getMyCart(String email){
+        User user = userRepository.findByUserEmail(email).orElseThrow(() -> new UserNotFoundException("User not found with this email."));
+        Cart cart = cartRepository.findByUser(user).orElseThrow(() -> new CartNotFoundException("Cart not found for this user " + email));
         return convertToCartResponse(cart, cartItemRepository.findByCart(cart));
     }
     private CartResponse convertToCartResponse(
