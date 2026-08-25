@@ -96,7 +96,6 @@ public class ProductService {
         prodRepo.save(existingProduct);
     }
 
-
     public Page<ProductResponse> searchAndFilterProducts(
             String name,
             BigDecimal minPrice,

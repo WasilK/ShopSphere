@@ -41,6 +41,11 @@ public class CategoryService {
         Category savedCategory = categoryRepository.save(category);
         return convertToResponse(savedCategory);
     }
+    public void updateCategoryStatus(Long id){
+        Category category = categoryRepository.findById(id).orElseThrow(() -> new CategoryNotFoundException("Category not found."));
+        category.setCategoryIsActive(true);
+        categoryRepository.save(category);
+    }
     public CategoryResponse getCategoryById(Long id){
         Category category = categoryRepository.findById(id).orElseThrow(() -> new CategoryNotFoundException("Category not found."));
         return convertToResponse(category);
@@ -48,6 +53,7 @@ public class CategoryService {
     public List<CategoryResponse> getAllCategories(){
         return categoryRepository.findAll().stream().map(this::convertToResponse).toList();
     }
+
     private CategoryResponse convertToResponse(Category category){
         CategoryResponse categoryResponse = new CategoryResponse();
         categoryResponse.setCategoryId(category.getCategoryId());
