@@ -3,7 +3,6 @@ package com.wasil.ShopSphere.controller;
 import com.wasil.ShopSphere.dto.cart.AddToCartRequest;
 import com.wasil.ShopSphere.dto.cart.CartResponse;
 import com.wasil.ShopSphere.dto.cart.UpdateCartItemRequest;
-import com.wasil.ShopSphere.model.CartItem;
 import com.wasil.ShopSphere.services.CartService;
 import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.*;
