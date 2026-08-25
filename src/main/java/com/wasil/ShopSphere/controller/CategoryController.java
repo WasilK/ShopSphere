@@ -35,4 +35,9 @@ public class CategoryController {
     public CategoryResponse deleteCategory(@PathVariable Long id){
         return categoryService.deleteCategory(id);
     }
+
+    @PutMapping("/{id}/status")
+    public void updateCategoryStatus(@PathVariable Long id){
+        categoryService.updateCategoryStatus(id);
+    }
 }
