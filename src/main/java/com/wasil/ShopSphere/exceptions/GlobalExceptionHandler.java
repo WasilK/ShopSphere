@@ -57,6 +57,19 @@ public class GlobalExceptionHandler {
         );
     }
 
+    @ExceptionHandler(ProductInActiveException.class)
+    public ResponseEntity<ErrorResponse> handleProductInActive(
+            ProductInActiveException ex,
+            HttpServletRequest request) {
+
+        return buildErrorResponse(
+                HttpStatus.CONFLICT,
+                "INACTIVE_PRODUCT",
+                ex.getMessage(),
+                request
+        );
+    }
+
     @ExceptionHandler(InventoryNotFoundException.class)
     public ResponseEntity<ErrorResponse> handleInventoryNotFound(
             InventoryNotFoundException ex,

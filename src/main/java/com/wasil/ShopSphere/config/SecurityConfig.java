@@ -96,7 +96,7 @@ public class SecurityConfig {
                         .hasRole("ADMIN")
 
                         .requestMatchers("/cart/**")
-                        .hasRole("CUSTOMER")
+                        .authenticated()
                         .requestMatchers("/users/me/**").authenticated()
                         .requestMatchers("/users/**")
                         .hasRole("ADMIN")

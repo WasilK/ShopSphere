@@ -68,8 +68,8 @@ public class UserController {
          return orderService.getOrdersByUser(id);
     }
 
-    @GetMapping("/{id}/cart")
-    public CartResponse getCartByUser(@PathVariable Long id){
-         return cartService.getCartByUser(id);
-    }
+//    @GetMapping("/{id}/cart")
+//    public CartResponse getCartByUser(@PathVariable Long id){
+//         return cartService.getCartByUser(id);
+//    }
 }
