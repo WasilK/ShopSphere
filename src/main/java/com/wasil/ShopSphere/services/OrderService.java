@@ -221,7 +221,7 @@ public class OrderService {
         }
 
         // 10. Clear cart
-        cartService.clearCart(userId);
+//        cartService.clearCart(userId);
 
         // 11. Return response
         return convertToResponse(

@@ -9,6 +9,7 @@ import org.hibernate.annotations.UpdateTimestamp;
 import org.springframework.data.annotation.CreatedDate;
 
 import java.time.Instant;
+import java.util.List;
 
 @Entity
 @Table(name = "users")
@@ -18,11 +19,13 @@ public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long userId;
-
-    private String userName;
+    private String firstName;
+    private String lastName;
     private String userPassword;
     private String userEmail;
     private String userPhone;
+    @Enumerated(EnumType.STRING)
+    private Role role;
 
     @CreationTimestamp
     private Instant userCreatedAt;
@@ -30,10 +33,8 @@ public class User {
     @UpdateTimestamp
     private Instant userUpdatedAt;
 
-    public User(String userName, String userPassword, String userEmail, String userPhone) {
-        this.userName = userName;
-        this.userPassword = userPassword;
-        this.userEmail = userEmail;
-        this.userPhone = userPhone;
-    }
+    @OneToMany(mappedBy = "user",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true)
+    private List<Address> addresses;
 }

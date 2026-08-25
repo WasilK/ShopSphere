@@ -2,12 +2,15 @@ package com.wasil.ShopSphere.controller;
 
 import com.wasil.ShopSphere.dto.cart.CartResponse;
 import com.wasil.ShopSphere.dto.order.OrderResponse;
+import com.wasil.ShopSphere.dto.user.ChangePasswordRequest;
+import com.wasil.ShopSphere.dto.user.UpdateUserRequest;
 import com.wasil.ShopSphere.dto.user.UserRequest;
 import com.wasil.ShopSphere.dto.user.UserResponse;
 import com.wasil.ShopSphere.services.CartService;
 import com.wasil.ShopSphere.services.OrderService;
 import com.wasil.ShopSphere.services.UserService;
 import jakarta.validation.Valid;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -29,6 +32,21 @@ public class UserController {
         return userService.findAllUsers();
     }
 
+    @GetMapping("/me")
+    public UserResponse getMyProfile(Authentication authentication){
+         String email = authentication.getName();
+        return userService.getUserByEmail(email);
+    }
+    @PutMapping("/me")
+    public UserResponse updateUser(Authentication authentication, @Valid @RequestBody UpdateUserRequest request){
+         String email = authentication.getName();
+         return userService.updateUser(email, request);
+    }
+    @PutMapping("/me/changePassword")
+    public void changePassword(Authentication authentication, @Valid @RequestBody ChangePasswordRequest request){
+         String email = authentication.getName();
+         userService.changePassword(email, request);
+    }
     @GetMapping("/{id}")
     public UserResponse getUserById(@PathVariable Long id){
         return userService.findUserById(id);
@@ -39,10 +57,6 @@ public class UserController {
         return userService.addUser(userRequest);
     }
 
-    @PutMapping("/{id}")
-    public UserResponse updateUser(@PathVariable Long id, @Valid @RequestBody UserRequest userRequest){
-        return userService.updateUser(id, userRequest);
-    }
 
     @DeleteMapping("/{id}")
     public void deleteUser(@PathVariable Long id){
@@ -54,8 +68,8 @@ public class UserController {
          return orderService.getOrdersByUser(id);
     }
 
-    @GetMapping("/{id}/cart")
-    public CartResponse getCartByUser(@PathVariable Long id){
-         return cartService.getCartByUser(id);
-    }
+//    @GetMapping("/{id}/cart")
+//    public CartResponse getCartByUser(@PathVariable Long id){
+//         return cartService.getCartByUser(id);
+//    }
 }

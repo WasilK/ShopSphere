@@ -14,6 +14,9 @@ public class ProductResponse {
     private String prodName;
     private BigDecimal prodPrice;
     private String prodDescription;
+    private Long categoryId;
+    private String categoryName;
+    private Boolean prodIsActive;
     private Instant prodCreatedAt;
     private Instant prodUpdatedAt;
 }

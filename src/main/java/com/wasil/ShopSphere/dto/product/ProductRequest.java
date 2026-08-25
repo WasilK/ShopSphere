@@ -19,4 +19,6 @@ public class ProductRequest {
     @Size(min = 10, max = 1000, message = "Description must be between 10 and 1000 characters")
     private String prodDescription;
 
+    @NotNull(message = "Category is required")
+    private Long categoryId;
 }

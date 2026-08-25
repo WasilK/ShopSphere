@@ -5,6 +5,7 @@ import com.wasil.ShopSphere.dto.cart.CartResponse;
 import com.wasil.ShopSphere.dto.cart.UpdateCartItemRequest;
 import com.wasil.ShopSphere.services.CartService;
 import jakarta.validation.Valid;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -14,21 +15,30 @@ public class CartController {
     public CartController(CartService cartService) {
         this.cartService = cartService;
     }
-    @PostMapping("/{userId}")
-    public CartResponse addToCart(@PathVariable Long userId, @RequestBody AddToCartRequest request) {
-        return cartService.addToCart(userId, request);
+    @PostMapping("/me")
+    public CartResponse addToCart(Authentication authentication ,@Valid @RequestBody AddToCartRequest request) {
+        String email = authentication.getName();
+        return cartService.addToCart(email, request);
     }
-    @PutMapping("/items/{cartItemId}")
-        public CartResponse updateCartItemQuantity(@PathVariable Long cartItemId, @Valid @RequestBody UpdateCartItemRequest request){
-            return cartService.updateCartItemQuantity(cartItemId, request);
+    @PutMapping("me/items/{prodId}")
+        public CartResponse updateCartItemQuantity(Authentication authentication, @PathVariable Long prodId, @Valid @RequestBody UpdateCartItemRequest request){
+        String email = authentication.getName();
+           return cartService.updateCartItemQuantity(email, prodId, request);
         }
-    @DeleteMapping("/items/{cartItemId}")
-    public CartResponse removeCartItem(@PathVariable Long cartItemId){
-        return cartService.removeCartItem(cartItemId);
+    @DeleteMapping("me/items/{prodId}")
+    public CartResponse removeCartItem(Authentication authentication, @PathVariable Long prodId){
+        String email = authentication.getName();
+        return cartService.removeCartItem(email, prodId);
     }
-    @PutMapping("/{userId}")
-    public CartResponse clearCart(@PathVariable Long userId){
-        return cartService.clearCart(userId);
+    @PutMapping("/me")
+    public CartResponse clearCart(Authentication authentication){
+        String email = authentication.getName();
+        return cartService.clearCart(email);
+    }
+    @GetMapping("/me")
+    public CartResponse getMyCart(Authentication authentication){
+        String email = authentication.getName();
+        return cartService.getMyCart(email);
     }
     }
 
