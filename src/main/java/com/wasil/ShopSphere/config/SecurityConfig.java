@@ -103,6 +103,9 @@ public class SecurityConfig {
                         .requestMatchers("/address/**")
                         .hasRole("ADMIN")
 
+                        .requestMatchers("/orders/me/**").authenticated()
+                        .requestMatchers("/orders/**")
+                        .hasRole("ADMIN")
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(

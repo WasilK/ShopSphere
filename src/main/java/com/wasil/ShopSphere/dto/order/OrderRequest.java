@@ -10,11 +10,6 @@ import java.util.List;
 
 @Data
 public class OrderRequest {
-
-    @NotNull(message = "User ID is required")
-    @Positive(message = "User ID must be greater than zero")
-    private Long userId;
-
     @NotEmpty(message = "Order must contain at least one item")
     @Valid
     private List<OrderItemRequest> orderItems;

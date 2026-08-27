@@ -331,6 +331,19 @@ public class GlobalExceptionHandler {
                 .body(errorResponse);
     }
 
+    @ExceptionHandler(UnauthorizedException.class)
+    public ResponseEntity<ErrorResponse> handleUnauthorized(
+            UnauthorizedException ex,
+            HttpServletRequest request
+    ){
+        return buildErrorResponse(
+                HttpStatus.FORBIDDEN,
+                "UNAUTHORIZED",
+                ex.getMessage(),
+                request
+        );
+    }
+
     private ResponseEntity<ErrorResponse> buildErrorResponse(
             HttpStatus status,
             String error,

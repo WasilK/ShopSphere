@@ -63,13 +63,4 @@ public class UserController {
         userService.deleteUser(id);
     }
 
-    @GetMapping("/{id}/orders")
-    public List<OrderResponse> getOrders(@PathVariable Long id){
-         return orderService.getOrdersByUser(id);
-    }
-
-//    @GetMapping("/{id}/cart")
-//    public CartResponse getCartByUser(@PathVariable Long id){
-//         return cartService.getCartByUser(id);
-//    }
 }
