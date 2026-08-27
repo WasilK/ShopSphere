@@ -1,0 +1,7 @@
+package com.wasil.ShopSphere.exceptions;
+
+public class UnauthorizedException extends RuntimeException {
+    public UnauthorizedException(String message){
+        super(message);
+    }
+}

@@ -48,13 +48,8 @@ public class OrderService {
     // =========================================================
 
     @Transactional
-    public OrderResponse createOrder(OrderRequest request) {
-
-        User user = userRepository.findById(request.getUserId())
-                .orElseThrow(() ->
-                        new UserNotFoundException(
-                                "User not found with id: " + request.getUserId()
-                        ));
+    public OrderResponse createOrder(String email, OrderRequest request) {
+        User user = userRepository.findByUserEmail(email).orElseThrow(() -> new UserNotFoundException("User not found with this email : " + email));
 
         Order order = new Order();
         order.setUser(user);
@@ -73,6 +68,7 @@ public class OrderService {
                             "Product not found with id: "
                                     + itemRequest.getProductId()
                     ));
+            if(!product.getProdIsActive()) throw new ProductInActiveException("Product is not active.");
 
             Inventory inventory = inventoryRepository.findByProduct(product)
                     .orElseThrow(() ->
@@ -131,20 +127,16 @@ public class OrderService {
     // =========================================================
 
     @Transactional
-    public OrderResponse checkoutOrder(Long userId) {
+    public OrderResponse checkoutOrder(String email) {
 
         // 1. Find User
-        User user = userRepository.findById(userId)
-                .orElseThrow(() ->
-                        new UserNotFoundException(
-                                "User not found with id: " + userId
-                        ));
+        User user = userRepository.findByUserEmail(email).orElseThrow(() -> new UserNotFoundException("User not found with this email : " + email));
 
         // 2. Find Cart
         Cart cart = cartRepository.findByUser(user)
                 .orElseThrow(() ->
                         new CartNotFoundException(
-                                "Cart not found for user with id: " + userId
+                                "Cart not found for user with email : " + email
                         ));
 
         // 3. Get Cart Items
@@ -168,6 +160,7 @@ public class OrderService {
         for (CartItem cartItem : cartItems) {
 
             Product product = cartItem.getProduct();
+            if(!product.getProdIsActive()) throw new ProductInActiveException("Product is not active.");
 
             Inventory inventory = inventoryRepository.findByProduct(product)
                     .orElseThrow(() ->
@@ -221,7 +214,7 @@ public class OrderService {
         }
 
         // 10. Clear cart
-//        cartService.clearCart(userId);
+        cartService.clearCart(email);
 
         // 11. Return response
         return convertToResponse(
@@ -251,6 +244,25 @@ public class OrderService {
                 orderItems
         );
     }
+    @Transactional
+    public OrderResponse getMyOrderById(String email, Long orderId) {
+        User user = userRepository.findByUserEmail(email).orElseThrow(() -> new UserNotFoundException("User not found with this email : " + email));
+
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() ->
+                        new OrderNotFoundException(
+                                "Order not found with id: " + orderId
+                        ));
+        if(!order.getUser().getUserId().equals(user.getUserId())) throw new UnauthorizedException("User cannot access other users orders");
+
+        List<OrderItem> orderItems =
+                orderItemRepository.findByOrder(order);
+
+        return convertToResponse(
+                order,
+                orderItems
+        );
+    }
 
 
     // =========================================================
@@ -258,8 +270,21 @@ public class OrderService {
     // =========================================================
 
     public List<OrderResponse> getAllOrders() {
-
         return orderRepository.findAll()
+                .stream()
+                .map(order ->
+                        convertToResponse(
+                                order,
+                                orderItemRepository.findByOrder(order)
+                        )
+                )
+                .toList();
+    }
+    @Transactional
+    public List<OrderResponse> getMyAllOrders(String email) {
+        User user = userRepository.findByUserEmail(email).orElseThrow(() -> new UserNotFoundException("User not found with this email : " + email));
+        List<Order> orders = orderRepository.findByUser(user);
+        return orders
                 .stream()
                 .map(order ->
                         convertToResponse(
@@ -302,13 +327,15 @@ public class OrderService {
     // =========================================================
 
     @Transactional
-    public OrderResponse cancelOrder(Long orderId) {
+    public OrderResponse cancelOrder(String email, Long orderId) {
+        User user = userRepository.findByUserEmail(email).orElseThrow(() -> new UserNotFoundException("User not found with this email : " + email));
 
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() ->
                         new OrderNotFoundException(
                                 "Order not found with id: " + orderId
                         ));
+        if(!order.getUser().getUserId().equals(user.getUserId())) throw new UnauthorizedException("User cannot access other users orders");
 
         // Only PENDING and CONFIRMED orders can be cancelled
         if (order.getOrderStatus() != OrderStatus.PENDING &&

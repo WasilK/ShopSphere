@@ -5,12 +5,13 @@ import com.wasil.ShopSphere.dto.order.OrderResponse;
 import com.wasil.ShopSphere.dto.order.OrderStatusUpdateRequest;
 import com.wasil.ShopSphere.services.OrderService;
 import jakarta.validation.Valid;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 @RestController
-@RequestMapping("shopsphere/orders")
+@RequestMapping("/orders")
 public class OrderController {
 
     private final OrderService orderService;
@@ -19,31 +20,42 @@ public class OrderController {
         this.orderService = orderService;
     }
 
-    @PostMapping
-    public OrderResponse createOrder(
+    @PostMapping("/me")
+    public OrderResponse createOrder(Authentication authenticated,
             @Valid @RequestBody OrderRequest request) {
-
-        return orderService.createOrder(request);
+        String email = authenticated.getName();
+        return orderService.createOrder(email, request);
     }
 
     @GetMapping("/{id}")
     public OrderResponse getOrderById(@PathVariable Long id) {
         return orderService.getOrderById(id);
     }
-
+    @GetMapping("/me/{id}")
+    public OrderResponse getMyOrderById(Authentication authenticated, @PathVariable Long id){
+        String email = authenticated.getName();
+        return orderService.getMyOrderById(email, id);
+    }
     @GetMapping
     public List<OrderResponse> getAllOrders() {
         return orderService.getAllOrders();
     }
-
-    @PutMapping("/{id}/cancel")
-    public OrderResponse cancelOrder(@PathVariable Long id) {
-        return orderService.cancelOrder(id);
+    @GetMapping("/me")
+    public List<OrderResponse> getMyAllOrders(Authentication authenticated){
+        String email = authenticated.getName();
+        return orderService.getMyAllOrders(email);
     }
 
-    @PostMapping("/{userId}/checkout")
-    public OrderResponse checkoutOrder(@PathVariable Long userId) {
-        return orderService.checkoutOrder(userId);
+    @PutMapping("me/{id}/cancel")
+    public OrderResponse cancelOrder(Authentication authenticated, @PathVariable Long id) {
+        String email = authenticated.getName();
+        return orderService.cancelOrder(email, id);
+    }
+
+    @PostMapping("/me/checkout")
+    public OrderResponse checkoutOrder(Authentication authenticated) {
+        String email = authenticated.getName();
+        return orderService.checkoutOrder(email);
     }
     @PutMapping("/{orderId}/status")
     public OrderResponse updateOrderStatus(@PathVariable Long orderId, @Valid @RequestBody OrderStatusUpdateRequest request) {
