@@ -256,6 +256,18 @@ public class GlobalExceptionHandler {
                 request
         );
     }
+    @ExceptionHandler(ProductImageNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleProductImageNotFound(
+            ProductImageNotFoundException ex,
+            HttpServletRequest request) {
+
+        return buildErrorResponse(
+                HttpStatus.NOT_FOUND,
+                "PRODUCT_IMAGE_NOT_FOUND",
+                ex.getMessage(),
+                request
+        );
+    }
     @ExceptionHandler(InvalidPasswordException.class)
     public ResponseEntity<ErrorResponse> handleInvalidPassword(
             InvalidPasswordException ex,

@@ -16,7 +16,7 @@ public class ProductImage {
     @Column(nullable = false)
     private String imageUrl;
 
-    private boolean primaryImage;
+    private Boolean primaryImage;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "prod_id", nullable = false)

@@ -1,21 +1,27 @@
 package com.wasil.ShopSphere.controller;
 
+import com.wasil.ShopSphere.dto.product.ProductImageResponse;
 import com.wasil.ShopSphere.dto.product.ProductRequest;
 import com.wasil.ShopSphere.dto.product.ProductResponse;
+import com.wasil.ShopSphere.model.ProductImage;
+import com.wasil.ShopSphere.services.ProductImageService;
 import com.wasil.ShopSphere.services.ProductService;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.math.BigDecimal;
-import java.util.List;
 
 @RestController
 @RequestMapping("/products")
 public class ProductController {
 
     private final ProductService productService;
-    public ProductController(ProductService productService) {
+    private final ProductImageService productImageService;
+
+    public ProductController(ProductService productService, ProductImageService productImageService) {
+        this.productImageService = productImageService;
         this.productService = productService;
     }
     @PostMapping
@@ -38,6 +44,10 @@ public class ProductController {
         productService.deleteProduct(id);
     }
 
+    @PostMapping("/{id}/images")
+    public ProductImageResponse uploadProductImage(@PathVariable Long id, @RequestParam("file") MultipartFile file){
+       return productImageService.uploadProductImage(id, file);
+    }
 
     @GetMapping
     public Page<ProductResponse> getProducts(
