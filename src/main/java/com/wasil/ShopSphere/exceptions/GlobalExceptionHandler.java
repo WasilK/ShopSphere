@@ -160,7 +160,66 @@ public class GlobalExceptionHandler {
                 request
         );
     }
+    @ExceptionHandler(PaymentNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handlePaymentNotFound(
+            PaymentNotFoundException ex,
+            HttpServletRequest request) {
 
+        return buildErrorResponse(
+                HttpStatus.NOT_FOUND,
+                "PAYMENT_NOT_FOUND",
+                ex.getMessage(),
+                request
+        );
+    }
+    @ExceptionHandler(PaymentFailedException.class)
+    public ResponseEntity<ErrorResponse> handlePaymentFailed(
+            PaymentFailedException ex,
+            HttpServletRequest request) {
+
+        return buildErrorResponse(
+                HttpStatus.BAD_REQUEST,
+                "PAYMENT_FAILED",
+                ex.getMessage(),
+                request
+        );
+    }
+    @ExceptionHandler(PaymentAlreadyProcessedException.class)
+    public ResponseEntity<ErrorResponse> handlePaymentAlreadyProcessed(
+            PaymentAlreadyProcessedException ex,
+            HttpServletRequest request) {
+
+        return buildErrorResponse(
+                HttpStatus.CONFLICT,
+                "PAYMENT_ALREADY_PROCESSED",
+                ex.getMessage(),
+                request
+        );
+    }
+    @ExceptionHandler(InvalidPaymentException.class)
+    public ResponseEntity<ErrorResponse> handleInvalidPayment(
+            InvalidPaymentException ex,
+            HttpServletRequest request) {
+
+        return buildErrorResponse(
+                HttpStatus.BAD_REQUEST,
+                "INVALID_PAYMENT",
+                ex.getMessage(),
+                request
+        );
+    }
+    @ExceptionHandler(PaymentAmountMismatchException.class)
+    public ResponseEntity<ErrorResponse> handlePaymentAmountMismatch(
+            PaymentAmountMismatchException ex,
+            HttpServletRequest request) {
+
+        return buildErrorResponse(
+                HttpStatus.BAD_REQUEST,
+                "PAYMENT_AMOUNT_MISMATCH",
+                ex.getMessage(),
+                request
+        );
+    }
     @ExceptionHandler(ObjectOptimisticLockingFailureException.class)
     public ResponseEntity<ErrorResponse> handleOptimisticLocking(
             ObjectOptimisticLockingFailureException ex,

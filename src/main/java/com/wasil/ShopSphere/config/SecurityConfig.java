@@ -106,6 +106,10 @@ public class SecurityConfig {
                         .requestMatchers("/orders/me/**").authenticated()
                         .requestMatchers("/orders/**")
                         .hasRole("ADMIN")
+
+                        .requestMatchers("/payment/me/**").authenticated()
+                        .requestMatchers("/checkout/me/**").authenticated()
+
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(

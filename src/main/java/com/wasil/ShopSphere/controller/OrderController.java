@@ -20,13 +20,6 @@ public class OrderController {
         this.orderService = orderService;
     }
 
-    @PostMapping("/me")
-    public OrderResponse createOrder(Authentication authenticated,
-            @Valid @RequestBody OrderRequest request) {
-        String email = authenticated.getName();
-        return orderService.createOrder(email, request);
-    }
-
     @GetMapping("/{id}")
     public OrderResponse getOrderById(@PathVariable Long id) {
         return orderService.getOrderById(id);
@@ -52,11 +45,6 @@ public class OrderController {
         return orderService.cancelOrder(email, id);
     }
 
-    @PostMapping("/me/checkout")
-    public OrderResponse checkoutOrder(Authentication authenticated) {
-        String email = authenticated.getName();
-        return orderService.checkoutOrder(email);
-    }
     @PutMapping("/{orderId}/status")
     public OrderResponse updateOrderStatus(@PathVariable Long orderId, @Valid @RequestBody OrderStatusUpdateRequest request) {
         return orderService.updateOrderStatus(orderId, request);
