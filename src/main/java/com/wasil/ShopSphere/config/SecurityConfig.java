@@ -108,6 +108,7 @@ public class SecurityConfig {
                         .hasRole("ADMIN")
 
                         .requestMatchers("/payment/me/**").authenticated()
+                        .requestMatchers("/checkout/me/**").authenticated()
 
                         .anyRequest().authenticated()
                 )
