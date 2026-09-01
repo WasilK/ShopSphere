@@ -5,6 +5,7 @@ import com.wasil.ShopSphere.dto.order.OrderResponse;
 import com.wasil.ShopSphere.dto.order.OrderStatusUpdateRequest;
 import com.wasil.ShopSphere.services.OrderService;
 import jakarta.validation.Valid;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
@@ -48,5 +49,14 @@ public class OrderController {
     @PutMapping("/{orderId}/status")
     public OrderResponse updateOrderStatus(@PathVariable Long orderId, @Valid @RequestBody OrderStatusUpdateRequest request) {
         return orderService.updateOrderStatus(orderId, request);
+    }
+
+    @PostMapping("/me/{id}/payment")
+    public ResponseEntity<String> paymentSuccess(
+            @PathVariable Long id) {
+
+        orderService.handlePaymentSuccess(id);
+
+        return ResponseEntity.ok("Payment successful");
     }
 }
