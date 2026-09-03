@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 @RestController
 @RequestMapping("/products")
@@ -70,5 +71,25 @@ public class ProductController {
                 sortBy,
                 direction
         );
+    }
+
+    @GetMapping("/{id}/images")
+    public List<ProductImageResponse> getProductImages(@PathVariable Long id){
+        return productImageService.getProductImages(id);
+    }
+
+    @GetMapping("/{id}/images/{imageId}")
+    public ProductImageResponse getProductImage(@PathVariable Long id, @PathVariable Long imageId){
+        return productImageService.getProductImageById(id, imageId);
+    }
+
+    @DeleteMapping("/{id}/images/{imageId}")
+    public void deleteProductImage(@PathVariable Long id, @PathVariable Long imageId){
+        productImageService.deleteProductImage(id, imageId);
+    }
+
+    @PutMapping("/{id}/images/{imageId}")
+    public ProductImageResponse setProductImagePrimary(@PathVariable Long id, @PathVariable Long imageId){
+        return productImageService.setProductImagePrimary(id, imageId);
     }
 }

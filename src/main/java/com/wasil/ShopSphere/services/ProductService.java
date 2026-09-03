@@ -11,6 +11,9 @@ import com.wasil.ShopSphere.repositories.CategoryRepository;
 import com.wasil.ShopSphere.repositories.InventoryRepository;
 import com.wasil.ShopSphere.repositories.ProductRepository;
 import com.wasil.ShopSphere.specifications.ProductSpecification;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.CachePut;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -67,12 +70,13 @@ public class ProductService {
        return convertToResponse(savedProduct);
     }
 
-
+    @Cacheable(value = "products", key = "#id")
     public ProductResponse getProductById(Long id){
         Product product = prodRepo.findById(id).orElseThrow(() -> new ProductNotFoundException("Product not found with id :" + id));
         return convertToResponse(product);
     }
 
+    @CachePut(value = "products", key = "#id")
     public ProductResponse updateProduct(Long id, ProductRequest productRequest){
         Category category = categoryRepository
                 .findById(productRequest.getCategoryId())
@@ -89,7 +93,7 @@ public class ProductService {
         Product updatedProduct = prodRepo.save(existingProduct);
         return convertToResponse(updatedProduct);
     }
-
+    @CacheEvict(value = "products", key = "#id")
     public void deleteProduct(Long id){
         Product existingProduct = prodRepo.findById(id).orElseThrow(() -> new ProductNotFoundException("Product not found with id :" + id));
         existingProduct.setProdIsActive(false);
