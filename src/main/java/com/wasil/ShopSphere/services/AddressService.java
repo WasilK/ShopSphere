@@ -32,6 +32,10 @@ public class AddressService {
         address.setAddressType(addressRequest.getAddressType());
         address.setUser(user);
 
+        if(user.getAddresses().size() >= 5){
+            throw new IllegalArgumentException("User cannot have more than 5 addresses.");
+        }
+
         if (user.getAddresses().isEmpty()) {
             address.setDefaultAddress(true);
         }
@@ -77,7 +81,11 @@ public class AddressService {
                         new AddressNotFoundException(
                                 "Address not found."
                         ));
+        if(address.isDefaultAddress()){
+            throw new IllegalStateException("Default address cannot be deleted.");
+        }
         user.getAddresses().remove(address);
+        addressRepository.delete(address);
     }
     public AddressResponse updateAddress(String email, AddressRequest addressRequest, Long id){
         User user = userRepository.findByUserEmail(email).orElseThrow(() -> new UserNotFoundException("User not found with this email."));
@@ -100,6 +108,7 @@ public class AddressService {
         Address savedAddress = addressRepository.save(address);
         return convertToResponse(savedAddress);
     }
+
     public List<AddressResponse> getAllAddresses(){
         return addressRepository.findAll().stream().map(this::convertToResponse).toList();
     }
