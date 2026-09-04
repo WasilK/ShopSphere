@@ -51,6 +51,10 @@ public class OrderService {
     public OrderResponse createOrder(String email, OrderRequest request) {
         User user = userRepository.findByUserEmail(email).orElseThrow(() -> new UserNotFoundException("User not found with this email : " + email));
 
+        if(user.getAddresses().isEmpty()){
+            throw new IllegalArgumentException("User must have an address before placing the order.");
+        }
+
         Order order = new Order();
         order.setUser(user);
         order.setOrderStatus(OrderStatus.PENDING);
@@ -145,6 +149,10 @@ public class OrderService {
         // 4. Check empty cart
         if (cartItems.isEmpty()) {
             throw new CartEmptyException("Cart is empty");
+        }
+
+        if(user.getAddresses().isEmpty()){
+            throw new IllegalArgumentException("User must have an address before placing the order.");
         }
 
         // 5. Create Order

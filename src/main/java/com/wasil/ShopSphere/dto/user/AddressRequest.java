@@ -32,7 +32,7 @@ public class AddressRequest {
     )
     private String zip;
     @NotNull(message = "Address type is required")
-    @NotBlank
+    @NotNull(message = "Address type is required")@NotNull(message = "Address type is required")
     private AddressType addressType;
     private Boolean defaultAddress;
 }
