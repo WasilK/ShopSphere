@@ -47,6 +47,7 @@ public class UserService {
         user.setUserPassword(passwordEncoder.encode(userRequest.getUserPassword()));
         user.setUserPhone(userRequest.getUserPhone());
         user.setRole(Role.CUSTOMER);
+        user.setIsActive(true);
         User savedUser = userRepository.save(user);
         return convertToResponse(savedUser);
     }
@@ -92,9 +93,28 @@ public class UserService {
     }
 
 
-    public void deleteUser(Long id) {
+    public UserResponse deleteUser(Long id) {
         User user = userRepository.findById(id).orElseThrow(() -> new UserNotFoundException("User not found with id: " + id));
-        userRepository.delete(user);
+        if (!user.getIsActive()) {
+            throw new IllegalStateException(
+                    "User is already inactive"
+            );
+        }
+        user.setIsActive(false);
+        userRepository.save(user);
+        return convertToResponse(user);
+    }
+
+    public UserResponse activateUser(Long id){
+        User user = userRepository.findById(id).orElseThrow(() -> new UserNotFoundException("User not found with id: " + id));
+        if (user.getIsActive()) {
+            throw new IllegalStateException(
+                    "User is already active"
+            );
+        }
+        user.setIsActive(true);
+        userRepository.save(user);
+        return convertToResponse(user);
     }
 
     private UserResponse convertToResponse(User user){
@@ -106,6 +126,7 @@ public class UserService {
         response.setUserPhone(user.getUserPhone());
         response.setUserCreatedAt(user.getUserCreatedAt());
         response.setUserUpdatedAt(user.getUserUpdatedAt());
+        response.setIsActive(user.getIsActive());
         return response;
     }
 }

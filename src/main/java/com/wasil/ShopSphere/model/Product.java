@@ -12,6 +12,13 @@ import java.time.Instant;
 
 @Entity
 @Data
+@Table(
+        indexes = {
+                @Index(name = "idx_product_category", columnList = "category_id"),
+                @Index(name = "idx_product_price", columnList = "prod_price"),
+                @Index(name = "idx_product_active", columnList = "prod_is_active")
+        }
+)
 @NoArgsConstructor
 public class Product {
     @Id

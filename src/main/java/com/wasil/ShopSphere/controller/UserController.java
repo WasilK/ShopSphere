@@ -1,13 +1,10 @@
 package com.wasil.ShopSphere.controller;
 
-import com.wasil.ShopSphere.dto.cart.CartResponse;
-import com.wasil.ShopSphere.dto.order.OrderResponse;
 import com.wasil.ShopSphere.dto.user.ChangePasswordRequest;
 import com.wasil.ShopSphere.dto.user.UpdateUserRequest;
 import com.wasil.ShopSphere.dto.user.UserRequest;
 import com.wasil.ShopSphere.dto.user.UserResponse;
-import com.wasil.ShopSphere.services.CartService;
-import com.wasil.ShopSphere.services.OrderService;
+
 import com.wasil.ShopSphere.services.UserService;
 import jakarta.validation.Valid;
 import org.springframework.security.core.Authentication;
@@ -18,13 +15,9 @@ import java.util.List;
 @RestController
 @RequestMapping("/users")
 public class UserController {
-    private final OrderService orderService;
     private final UserService userService;
-    private final CartService cartService;
-     public UserController(UserService userService, OrderService orderService, CartService cartService) {
+     public UserController(UserService userService) {
          this.userService = userService;
-         this.orderService = orderService;
-         this.cartService = cartService;
      }
 
      @GetMapping
@@ -63,4 +56,8 @@ public class UserController {
         userService.deleteUser(id);
     }
 
+    @PutMapping("{id}")
+    public void activateUser(@PathVariable Long id){
+         userService.activateUser(id);
+    }
 }

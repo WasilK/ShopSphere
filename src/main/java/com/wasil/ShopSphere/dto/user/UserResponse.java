@@ -11,6 +11,7 @@ public class UserResponse {
     private String lastName;
     private String userEmail;
     private String userPhone;
+    private Boolean isActive;
     private Instant userCreatedAt;
     private Instant userUpdatedAt;
 }

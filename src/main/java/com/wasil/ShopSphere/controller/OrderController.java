@@ -1,6 +1,5 @@
 package com.wasil.ShopSphere.controller;
 
-import com.wasil.ShopSphere.dto.order.OrderRequest;
 import com.wasil.ShopSphere.dto.order.OrderResponse;
 import com.wasil.ShopSphere.dto.order.OrderStatusUpdateRequest;
 import com.wasil.ShopSphere.services.OrderService;
