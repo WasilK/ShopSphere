@@ -90,9 +90,9 @@ public class PaymentService {
             );
 
             // 12. Update order after successful payment
-            order.setOrderStatus(
-                    OrderStatus.CONFIRMED
-            );
+//            order.setOrderStatus(
+//                    OrderStatus.CONFIRMED
+//            );
 
             // 13. Save order
             orderRepository.save(order);

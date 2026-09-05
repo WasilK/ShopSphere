@@ -22,6 +22,7 @@ public class OrderService {
     private final StockMovementRepository stockMovementRepository;
     private final CartRepository cartRepository;
     private final CartService cartService;
+    private final PaymentRepository paymentRepository;
 
     public OrderService(
             OrderRepository orderRepository,
@@ -31,7 +32,8 @@ public class OrderService {
             InventoryRepository inventoryRepository,
             StockMovementRepository stockMovementRepository,
             CartRepository cartRepository,
-            CartService cartService) {
+            CartService cartService,
+            PaymentRepository paymentRepository) {
 
         this.orderRepository = orderRepository;
         this.orderItemRepository = orderItemRepository;
@@ -41,6 +43,7 @@ public class OrderService {
         this.stockMovementRepository = stockMovementRepository;
         this.cartRepository = cartRepository;
         this.cartService = cartService;
+        this.paymentRepository = paymentRepository;
     }
 
     // =========================================================
@@ -105,11 +108,6 @@ public class OrderService {
                     )
             );
 
-            // Reduce inventory + create movement
-            reduceInventory(
-                    inventory,
-                    itemRequest.getQuantity()
-            );
         }
 
         order.setTotalAmount(totalAmount);
@@ -203,11 +201,6 @@ public class OrderService {
                     )
             );
 
-            // Reduce inventory
-            reduceInventory(
-                    inventory,
-                    quantity
-            );
         }
 
         // 7. Set total
@@ -510,6 +503,74 @@ public class OrderService {
         );
     }
 
+    @Transactional
+    public void handlePaymentSuccess(Long orderId) {
+
+        // 1. Find the order
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() ->
+                        new OrderNotFoundException(
+                                "Order not found with id: " + orderId
+                        )
+                );
+        Payment payment = paymentRepository.findByOrder_OrderId(orderId)
+                .orElseThrow(() ->
+                        new PaymentNotFoundException(
+                                "Payment not found for order: " + orderId
+                        )
+                );
+
+        // IMPORTANT: Check actual payment status
+        if (payment.getPaymentStatus() != PaymentStatus.SUCCESS) {
+            throw new InvalidPaymentException(
+                    "Payment is not successful. Inventory cannot be reduced."
+            );
+        }
+
+        // 2. Don't process the same successful payment twice
+        if (order.getOrderStatus() == OrderStatus.CONFIRMED || order.getOrderStatus() == OrderStatus.PROCESSING || order.getOrderStatus() == OrderStatus.SHIPPED ||  order.getOrderStatus() == OrderStatus.DELIVERED || order.getOrderStatus() == OrderStatus.CANCELLED) {
+            return;
+        }
+
+        // 3. Get all items belonging to this order
+        List<OrderItem> orderItems =
+                orderItemRepository.findByOrder(order);
+
+        // 4. Reduce inventory for every item
+        for (OrderItem item : orderItems) {
+
+            Product product = item.getProduct();
+
+            Inventory inventory =
+                    inventoryRepository.findByProduct(product)
+                            .orElseThrow(() ->
+                                    new InventoryNotFoundException(
+                                            "Inventory not found for product: "
+                                                    + product.getProdName()
+                                    )
+                            );
+
+            int quantity = item.getQuantity();
+
+            // 5. Check stock again
+            validateStock(
+                    inventory,
+                    quantity,
+                    product
+            );
+
+            // 6. Reduce stock
+            reduceInventory(
+                    inventory,
+                    quantity
+            );
+        }
+
+        // 7. Payment succeeded → confirm order
+        order.setOrderStatus(OrderStatus.CONFIRMED);
+
+        orderRepository.save(order);
+    }
 
     // =========================================================
     // HELPER: REDUCE INVENTORY + RECORD MOVEMENT
