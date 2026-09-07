@@ -20,6 +20,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.Set;
@@ -41,7 +42,7 @@ public class ProductService {
         this.inventoryRepository = inventoryRepository;
         this.categoryRepository = categoryRepository;
     }
-
+    @Transactional
     public ProductResponse addProduct(ProductRequest productRequest) {
         Category category = categoryRepository
                 .findById(productRequest.getCategoryId())
@@ -69,13 +70,13 @@ public class ProductService {
        inventoryRepository.save(inventory);
        return convertToResponse(savedProduct);
     }
-
+    @Transactional(readOnly = true)
     @Cacheable(value = "products", key = "#id")
     public ProductResponse getProductById(Long id){
         Product product = prodRepo.findById(id).orElseThrow(() -> new ProductNotFoundException("Product not found with id :" + id));
         return convertToResponse(product);
     }
-
+    @Transactional
     @CachePut(value = "products", key = "#id")
     public ProductResponse updateProduct(Long id, ProductRequest productRequest){
         Category category = categoryRepository
@@ -99,7 +100,7 @@ public class ProductService {
         existingProduct.setProdIsActive(false);
         prodRepo.save(existingProduct);
     }
-
+    @Transactional(readOnly = true)
     public Page<ProductResponse> searchAndFilterProducts(
             String name,
             BigDecimal minPrice,
