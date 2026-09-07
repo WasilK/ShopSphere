@@ -7,6 +7,7 @@ import com.wasil.ShopSphere.exceptions.DuplicateResourceException;
 import com.wasil.ShopSphere.model.Category;
 import org.springframework.stereotype.Service;
 import com.wasil.ShopSphere.repositories.CategoryRepository;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -41,6 +42,7 @@ public class CategoryService {
         Category savedCategory = categoryRepository.save(category);
         return convertToResponse(savedCategory);
     }
+
     public void updateCategoryStatus(Long id){
         Category category = categoryRepository.findById(id).orElseThrow(() -> new CategoryNotFoundException("Category not found."));
         category.setCategoryIsActive(true);
