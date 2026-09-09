@@ -19,7 +19,11 @@ import com.wasil.ShopSphere.model.User;
 import com.wasil.ShopSphere.repositories.CartItemRepository;
 import com.wasil.ShopSphere.repositories.CartRepository;
 import com.wasil.ShopSphere.repositories.CategoryRepository;
+import com.wasil.ShopSphere.repositories.IdempotencyRepository;
 import com.wasil.ShopSphere.repositories.InventoryRepository;
+import com.wasil.ShopSphere.repositories.OrderItemRepository;
+import com.wasil.ShopSphere.repositories.OrderRepository;
+import com.wasil.ShopSphere.repositories.PaymentRepository;
 import com.wasil.ShopSphere.repositories.ProductRepository;
 import com.wasil.ShopSphere.repositories.StockMovementRepository;
 import com.wasil.ShopSphere.repositories.UserRepository;
@@ -40,6 +44,10 @@ class CartServiceIntegrationTest {
     @Autowired private CartService cartService;
     @Autowired private CartRepository cartRepository;
     @Autowired private CartItemRepository cartItemRepository;
+    @Autowired private IdempotencyRepository idempotencyRepository;
+    @Autowired private PaymentRepository paymentRepository;
+    @Autowired private OrderItemRepository orderItemRepository;
+    @Autowired private OrderRepository orderRepository;
     @Autowired private UserRepository userRepository;
     @Autowired private ProductRepository productRepository;
     @Autowired private InventoryRepository inventoryRepository;
@@ -48,6 +56,10 @@ class CartServiceIntegrationTest {
 
     @BeforeEach
     void cleanDatabase() {
+        paymentRepository.deleteAll();
+        idempotencyRepository.deleteAll();
+        orderItemRepository.deleteAll();
+        orderRepository.deleteAll();
         cartItemRepository.deleteAll();
         cartRepository.deleteAll();
         stockMovementRepository.deleteAll();
