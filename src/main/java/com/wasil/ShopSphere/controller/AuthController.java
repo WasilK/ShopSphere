@@ -1,6 +1,7 @@
 package com.wasil.ShopSphere.controller;
 
 import com.wasil.ShopSphere.dto.auth.LoginRequest;
+import com.wasil.ShopSphere.dto.auth.LoginResponse;
 import com.wasil.ShopSphere.dto.user.UserRequest;
 import com.wasil.ShopSphere.dto.user.UserResponse;
 import com.wasil.ShopSphere.services.AuthService;
@@ -22,7 +23,7 @@ public class AuthController {
         this.userService = userService;
     }
     @PostMapping("/login")
-    public String login(@RequestBody LoginRequest request){
+    public LoginResponse login(@RequestBody LoginRequest request){
         return authService.login(request);
     }
     @PostMapping("/register")

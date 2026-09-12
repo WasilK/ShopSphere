@@ -124,6 +124,7 @@ public class UserService {
         response.setLastName(user.getLastName());
         response.setUserEmail(user.getUserEmail());
         response.setUserPhone(user.getUserPhone());
+        response.setRole(user.getRole());
         response.setUserCreatedAt(user.getUserCreatedAt());
         response.setUserUpdatedAt(user.getUserUpdatedAt());
         response.setIsActive(user.getIsActive());

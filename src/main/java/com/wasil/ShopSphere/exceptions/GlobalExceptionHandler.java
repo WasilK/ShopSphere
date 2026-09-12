@@ -448,7 +448,7 @@ public class GlobalExceptionHandler {
         return buildErrorResponse(
                 HttpStatus.UNAUTHORIZED,
                 "INVALID_CREDENTIALS",
-                ex.getMessage(),
+                "Invalid Email or password, Please try again or register if not registered.",
                 request
         );
     }
