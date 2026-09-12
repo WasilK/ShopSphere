@@ -1,8 +1,5 @@
 package com.wasil.ShopSphere.dto.user;
 
-import com.wasil.ShopSphere.model.Role;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
 import jakarta.validation.constraints.*;
 import lombok.Data;
 

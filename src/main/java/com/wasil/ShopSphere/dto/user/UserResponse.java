@@ -1,5 +1,6 @@
 package com.wasil.ShopSphere.dto.user;
 
+import com.wasil.ShopSphere.model.Role;
 import lombok.Data;
 
 import java.time.Instant;
@@ -12,6 +13,7 @@ public class UserResponse {
     private String userEmail;
     private String userPhone;
     private Boolean isActive;
+    private Role role;
     private Instant userCreatedAt;
     private Instant userUpdatedAt;
 }
