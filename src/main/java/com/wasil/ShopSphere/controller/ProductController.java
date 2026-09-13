@@ -3,7 +3,6 @@ package com.wasil.ShopSphere.controller;
 import com.wasil.ShopSphere.dto.product.ProductImageResponse;
 import com.wasil.ShopSphere.dto.product.ProductRequest;
 import com.wasil.ShopSphere.dto.product.ProductResponse;
-import com.wasil.ShopSphere.model.ProductImage;
 import com.wasil.ShopSphere.services.ProductImageService;
 import com.wasil.ShopSphere.services.ProductService;
 import jakarta.validation.Valid;
@@ -56,7 +55,7 @@ public class ProductController {
             @RequestParam(required = false) BigDecimal minPrice,
             @RequestParam(required = false) BigDecimal maxPrice,
             @RequestParam(required = false) Long categoryId,
-            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "3") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "prodCreatedAt") String sortBy,
             @RequestParam(defaultValue = "desc") String direction) {
