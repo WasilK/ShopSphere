@@ -77,7 +77,9 @@ public class OrderService {
                     ));
             if(!product.getProdIsActive()) throw new ProductInActiveException("Product is not active.");
 
-            Inventory inventory = inventoryRepository.findByProduct(product)
+            // Lock the inventory row so two concurrent checkouts can't both
+            // pass validation against the same currentStock value.
+            Inventory inventory = inventoryRepository.findByProductForUpdate(product)
                     .orElseThrow(() ->
                             new InventoryNotFoundException(
                                     "Inventory not found for product: "
@@ -90,6 +92,10 @@ public class OrderService {
                     itemRequest.getQuantity(),
                     product
             );
+
+            // Reserve stock immediately so it can't be oversold while
+            // payment is still pending.
+            reduceInventory(inventory, itemRequest.getQuantity());
 
             // Create OrderItem
             OrderItem orderItem = createOrderItem(
@@ -168,7 +174,7 @@ public class OrderService {
             Product product = cartItem.getProduct();
             if(!product.getProdIsActive()) throw new ProductInActiveException("Product is not active.");
 
-            Inventory inventory = inventoryRepository.findByProduct(product)
+            Inventory inventory = inventoryRepository.findByProductForUpdate(product)
                     .orElseThrow(() ->
                             new InventoryNotFoundException(
                                     "Inventory not found for product: "
@@ -183,6 +189,10 @@ public class OrderService {
                     quantity,
                     product
             );
+
+            // Reserve stock immediately so it can't be oversold while
+            // payment is still pending.
+            reduceInventory(inventory, quantity);
 
             // Create OrderItem
             OrderItem orderItem = createOrderItem(
@@ -353,13 +363,60 @@ public class OrderService {
         List<OrderItem> orderItems =
                 orderItemRepository.findByOrder(order);
 
-        // Restore inventory
+        restoreInventoryForItems(orderItems, MovementType.ORDER_CANCELLED);
+
+        // Update order status
+        order.setOrderStatus(OrderStatus.CANCELLED);
+
+        Order savedOrder =
+                orderRepository.save(order);
+
+        return convertToResponse(
+                savedOrder,
+                orderItems
+        );
+    }
+
+    /*
+     * Called when a payment attempt fails (or is declined) for a PENDING
+     * order. Stock was already reserved at order-creation time, so it must
+     * be released back to inventory and the order marked CANCELLED so the
+     * customer can retry with a fresh checkout.
+     */
+    @Transactional
+    public void releaseStockForFailedPayment(Long orderId) {
+
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() ->
+                        new OrderNotFoundException(
+                                "Order not found with id: " + orderId
+                        ));
+
+        if (order.getOrderStatus() != OrderStatus.PENDING) {
+            return; // nothing to release — already confirmed/cancelled elsewhere
+        }
+
+        List<OrderItem> orderItems = orderItemRepository.findByOrder(order);
+        restoreInventoryForItems(orderItems, MovementType.ORDER_CANCELLED);
+
+        order.setOrderStatus(OrderStatus.CANCELLED);
+        orderRepository.save(order);
+    }
+
+    // =========================================================
+    // HELPER: RESTORE INVENTORY (cancellation / failed payment)
+    // =========================================================
+
+    private void restoreInventoryForItems(
+            List<OrderItem> orderItems,
+            MovementType movementType) {
+
         for (OrderItem item : orderItems) {
 
             Product product = item.getProduct();
 
             Inventory inventory =
-                    inventoryRepository.findByProduct(product)
+                    inventoryRepository.findByProductForUpdate(product)
                             .orElseThrow(() ->
                                     new InventoryNotFoundException(
                                             "Inventory not found for product: "
@@ -380,23 +437,10 @@ public class OrderService {
 
             stockMovement.setInventory(inventory);
             stockMovement.setQuantity(quantity);
-            stockMovement.setMovementType(
-                    MovementType.ORDER_CANCELLED
-            );
+            stockMovement.setMovementType(movementType);
 
             stockMovementRepository.save(stockMovement);
         }
-
-        // Update order status
-        order.setOrderStatus(OrderStatus.CANCELLED);
-
-        Order savedOrder =
-                orderRepository.save(order);
-
-        return convertToResponse(
-                savedOrder,
-                orderItems
-        );
     }
 
     @Transactional
@@ -504,7 +548,7 @@ public class OrderService {
     }
 
     @Transactional
-    public void handlePaymentSuccess(Long orderId) {
+    public void handlePaymentSuccess(String email, Long orderId) {
 
         // 1. Find the order
         Order order = orderRepository.findById(orderId)
@@ -513,6 +557,15 @@ public class OrderService {
                                 "Order not found with id: " + orderId
                         )
                 );
+
+        // 1a. Ownership check — this method used to be reachable without
+        // any verification that the caller owns the order.
+        if (!order.getUser().getUserEmail().equals(email)) {
+            throw new UnauthorizedException(
+                    "User cannot confirm another user's order"
+            );
+        }
+
         Payment payment = paymentRepository.findByOrder_OrderId(orderId)
                 .orElseThrow(() ->
                         new PaymentNotFoundException(
@@ -523,7 +576,7 @@ public class OrderService {
         // IMPORTANT: Check actual payment status
         if (payment.getPaymentStatus() != PaymentStatus.SUCCESS) {
             throw new InvalidPaymentException(
-                    "Payment is not successful. Inventory cannot be reduced."
+                    "Payment is not successful. Order cannot be confirmed."
             );
         }
 
@@ -532,39 +585,10 @@ public class OrderService {
             return;
         }
 
-        // 3. Get all items belonging to this order
-        List<OrderItem> orderItems =
-                orderItemRepository.findByOrder(order);
-
-        // 4. Reduce inventory for every item
-        for (OrderItem item : orderItems) {
-
-            Product product = item.getProduct();
-
-            Inventory inventory =
-                    inventoryRepository.findByProduct(product)
-                            .orElseThrow(() ->
-                                    new InventoryNotFoundException(
-                                            "Inventory not found for product: "
-                                                    + product.getProdName()
-                                    )
-                            );
-
-            int quantity = item.getQuantity();
-
-            // 5. Check stock again
-            validateStock(
-                    inventory,
-                    quantity,
-                    product
-            );
-
-            // 6. Reduce stock
-            reduceInventory(
-                    inventory,
-                    quantity
-            );
-        }
+        // NOTE: stock is no longer reduced here. It is reserved
+        // (decremented) at order-creation time under a row lock, so by
+        // the time payment succeeds there is nothing left to reduce —
+        // doing it twice would silently double-deduct inventory.
 
         // 7. Payment succeeded → confirm order
         order.setOrderStatus(OrderStatus.CONFIRMED);

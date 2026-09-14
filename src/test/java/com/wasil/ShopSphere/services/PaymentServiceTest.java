@@ -33,6 +33,9 @@ class PaymentServiceTest {
     @Mock
     private OrderRepository orderRepository;
 
+    @Mock
+    private OrderService orderService;
+
     @InjectMocks
     private PaymentService paymentService;
 
@@ -119,7 +122,7 @@ class PaymentServiceTest {
         verify(userRepository).findByUserEmail(email);
         verify(orderRepository).findById(1L);
         verify(paymentRepository).existsByOrder_OrderId(1L);
-        verify(orderRepository).save(order);
+        verify(orderService).handlePaymentSuccess(email, 1L);
         verify(paymentRepository, times(2)).save(any(Payment.class));
     }
 
@@ -390,8 +393,8 @@ class PaymentServiceTest {
                 .thenReturn(payment);
 
         // Make something inside the try block fail
-        when(orderRepository.save(order))
-                .thenThrow(new RuntimeException("Database error"));
+        doThrow(new RuntimeException("Database error"))
+                .when(orderService).handlePaymentSuccess(email, 1L);
 
         // Act + Assert
         PaymentFailedException exception = assertThrows(
@@ -410,11 +413,13 @@ class PaymentServiceTest {
                 payment.getPaymentStatus()
         );
 
-        // Payment saved once initially + once as FAILED
-        verify(paymentRepository, times(2))
+        // Payment saved: once initially (PENDING), once as SUCCESS
+        // (before order confirmation is attempted), then once more as
+        // FAILED when order confirmation throws.
+        verify(paymentRepository, times(3))
                 .save(any(Payment.class));
 
-        verify(orderRepository).save(order);
+        verify(orderService).releaseStockForFailedPayment(1L);
     }
 
 

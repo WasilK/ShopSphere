@@ -192,9 +192,13 @@ public class CartService {
         // CartItem is the owning side of this relationship. Fetch and delete
         // persisted items explicitly so this also works when the Cart entity's
         // inverse collection has not been loaded or synchronized.
-        cartItemRepository.deleteAllInBatch(cartItemRepository.findByCart(cart));
+        List<CartItem> cartItems = cartItemRepository.findByCart(cart);
 
-        return convertToCartResponse(cart, cartItemRepository.findByCart(cart));
+        cartItemRepository.deleteAllInBatch(cartItems);
+
+        cartRepository.save(cart);
+
+        return convertToCartResponse(cart, new ArrayList<>());
     }
     @Transactional
     public CartResponse getMyCart(String email){

@@ -4,7 +4,6 @@ import com.wasil.ShopSphere.dto.order.OrderResponse;
 import com.wasil.ShopSphere.dto.order.OrderStatusUpdateRequest;
 import com.wasil.ShopSphere.services.OrderService;
 import jakarta.validation.Valid;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
@@ -50,12 +49,9 @@ public class OrderController {
         return orderService.updateOrderStatus(orderId, request);
     }
 
-    @PostMapping("/me/{id}/payment")
-    public ResponseEntity<String> paymentSuccess(
-            @PathVariable Long id) {
-
-        orderService.handlePaymentSuccess(id);
-
-        return ResponseEntity.ok("Payment successful");
-    }
+    // NOTE: order confirmation used to be a separate, unauthenticated-ownership
+    // endpoint here that any logged-in user could call for any order ID.
+    // It has been removed — PaymentService.processPayment() now calls
+    // orderService.handlePaymentSuccess(email, orderId) directly, in the
+    // same transaction as the payment write, with an ownership check.
 }

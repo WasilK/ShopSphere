@@ -2,7 +2,6 @@ package com.wasil.ShopSphere.services;
 
 import com.cloudinary.Cloudinary;
 import com.cloudinary.utils.ObjectUtils;
-import lombok.SneakyThrows;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -18,7 +17,29 @@ public class CloudinaryService {
         this.cloudinary = cloudinary;
     }
 
+    private static final long MAX_FILE_SIZE_BYTES = 5L * 1024 * 1024; // 5MB
+    private static final java.util.Set<String> ALLOWED_CONTENT_TYPES = java.util.Set.of(
+            "image/jpeg", "image/png", "image/webp"
+    );
+
     public String uploadImage(MultipartFile image) {
+
+        if (image == null || image.isEmpty()) {
+            throw new IllegalArgumentException("Image file must not be empty");
+        }
+
+        if (image.getSize() > MAX_FILE_SIZE_BYTES) {
+            throw new IllegalArgumentException(
+                    "Image file must not exceed 5MB"
+            );
+        }
+
+        String contentType = image.getContentType();
+        if (contentType == null || !ALLOWED_CONTENT_TYPES.contains(contentType.toLowerCase())) {
+            throw new IllegalArgumentException(
+                    "Unsupported image type. Allowed types: JPEG, PNG, WEBP"
+            );
+        }
 
         try {
 

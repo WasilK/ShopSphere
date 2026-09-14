@@ -8,6 +8,7 @@ import com.wasil.ShopSphere.repositories.OrderRepository;
 import com.wasil.ShopSphere.repositories.PaymentRepository;
 import com.wasil.ShopSphere.repositories.UserRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.UUID;
 
@@ -16,12 +17,15 @@ public class PaymentService {
     private final PaymentRepository paymentRepository;
     private final UserRepository userRepository;
     private final OrderRepository orderRepository;
-    public PaymentService(PaymentRepository paymentRepository, UserRepository userRepository, OrderRepository orderRepository){
+    private final OrderService orderService;
+    public PaymentService(PaymentRepository paymentRepository, UserRepository userRepository, OrderRepository orderRepository, OrderService orderService){
         this.paymentRepository = paymentRepository;
         this.userRepository = userRepository;
         this.orderRepository = orderRepository;
+        this.orderService = orderService;
     }
 
+    @Transactional
     public PaymentResponse processPayment(String email, PaymentRequest paymentRequest, Long orderId){
         User user = userRepository.findByUserEmail(email).orElseThrow(() -> new UserNotFoundException("User not found with this email : " + email));
 
@@ -89,29 +93,27 @@ public class PaymentService {
                     PaymentStatus.SUCCESS
             );
 
-            // 12. Update order after successful payment
-            order.setOrderStatus(
-                    OrderStatus.CONFIRMED
-            );
-
-            // 13. Save order
-            orderRepository.save(order);
-
-            // 14. Save updated payment
+            // 12. Save updated payment
             Payment completedPayment =
                     paymentRepository.save(savedPayment);
 
-            // 15. Return payment response
+            // 13. Confirm the order in the SAME transaction — this used to
+            // be a separate, unlinked API call the frontend had to remember
+            // to make, which left paid orders stuck in PENDING forever.
+            orderService.handlePaymentSuccess(email, orderId);
+
+            // 14. Return payment response
             return convertToResponse(completedPayment);
 
         } catch (Exception e) {
 
-            // Payment failed
+            // Payment failed — release the stock that was reserved at
+            // order-creation time so it isn't stuck unavailable forever.
             savedPayment.setPaymentStatus(
                     PaymentStatus.FAILED
             );
-
             paymentRepository.save(savedPayment);
+            orderService.releaseStockForFailedPayment(orderId);
 
             throw new PaymentFailedException(
                     "Payment processing failed"

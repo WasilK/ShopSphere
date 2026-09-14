@@ -4,8 +4,8 @@ import com.wasil.ShopSphere.dto.order.OrderRequest;
 import com.wasil.ShopSphere.dto.order.OrderResponse;
 import com.wasil.ShopSphere.exceptions.*;
 import com.wasil.ShopSphere.model.*;
-import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class CheckoutService {
@@ -26,6 +26,16 @@ public class CheckoutService {
     // CHECKOUT CART
     // =========================================================
 
+    /*
+     * @Transactional on purpose: create-key -> attempt-checkout ->
+     * mark-completed/failed is one atomic unit. If checkoutOrder() fails,
+     * the ENTIRE thing rolls back together — including the idempotency
+     * key itself — leaving no trace, so a retry with the same key just
+     * starts fresh via createKey() again. Do not add REQUIRES_NEW to
+     * IdempotencyService.markFailed: that would try to update this same
+     * (still-open, uncommitted) transaction's row from a second
+     * transaction and self-deadlock.
+     */
     @Transactional
     public OrderResponse createCheckoutOrder(
             String email,
@@ -139,6 +149,7 @@ public class CheckoutService {
     // DIRECT CHECKOUT
     // =========================================================
 
+    // See the note on createCheckoutOrder — @Transactional is required here.
     @Transactional
     public OrderResponse directCheckoutOrder(
             String email,

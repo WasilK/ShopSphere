@@ -193,7 +193,7 @@ class OrderServiceTest {
         when(productRepository.findById(1L))
                 .thenReturn(Optional.of(product));
 
-        when(inventoryRepository.findByProduct(product))
+        when(inventoryRepository.findByProductForUpdate(product))
                 .thenReturn(Optional.of(inventory));
 
         when(orderRepository.save(any(Order.class)))
@@ -226,7 +226,7 @@ class OrderServiceTest {
                 .findById(1L);
 
         verify(inventoryRepository)
-                .findByProduct(product);
+                .findByProductForUpdate(product);
 
         verify(orderRepository)
                 .save(any(Order.class));
@@ -300,7 +300,7 @@ class OrderServiceTest {
         );
 
         verify(inventoryRepository, never())
-                .findByProduct(any(Product.class));
+                .findByProductForUpdate(any(Product.class));
     }
 
 
@@ -328,7 +328,7 @@ class OrderServiceTest {
         );
 
         verify(inventoryRepository, never())
-                .findByProduct(any(Product.class));
+                .findByProductForUpdate(any(Product.class));
     }
 
 
@@ -341,7 +341,7 @@ class OrderServiceTest {
         when(productRepository.findById(1L))
                 .thenReturn(Optional.of(product));
 
-        when(inventoryRepository.findByProduct(product))
+        when(inventoryRepository.findByProductForUpdate(product))
                 .thenReturn(Optional.empty());
 
         assertThrows(
@@ -368,7 +368,7 @@ class OrderServiceTest {
         when(productRepository.findById(1L))
                 .thenReturn(Optional.of(product));
 
-        when(inventoryRepository.findByProduct(product))
+        when(inventoryRepository.findByProductForUpdate(product))
                 .thenReturn(Optional.of(inventory));
 
         IllegalArgumentException exception =
@@ -398,7 +398,7 @@ class OrderServiceTest {
         when(productRepository.findById(1L))
                 .thenReturn(Optional.of(product));
 
-        when(inventoryRepository.findByProduct(product))
+        when(inventoryRepository.findByProductForUpdate(product))
                 .thenReturn(Optional.of(inventory));
 
         InsufficientStockException exception =
@@ -431,7 +431,7 @@ class OrderServiceTest {
         when(productRepository.findById(1L))
                 .thenReturn(Optional.of(product));
 
-        when(inventoryRepository.findByProduct(product))
+        when(inventoryRepository.findByProductForUpdate(product))
                 .thenReturn(Optional.of(inventory));
 
         when(orderRepository.save(any(Order.class)))
@@ -472,7 +472,7 @@ class OrderServiceTest {
         when(cartRepository.findByUser(user))
                 .thenReturn(Optional.of(cart));
 
-        when(inventoryRepository.findByProduct(product))
+        when(inventoryRepository.findByProductForUpdate(product))
                 .thenReturn(Optional.of(inventory));
 
         when(orderRepository.save(any(Order.class)))
@@ -610,7 +610,7 @@ class OrderServiceTest {
         );
 
         verify(inventoryRepository, never())
-                .findByProduct(any(Product.class));
+                .findByProductForUpdate(any(Product.class));
     }
 
 
@@ -625,7 +625,7 @@ class OrderServiceTest {
         when(cartRepository.findByUser(user))
                 .thenReturn(Optional.of(cart));
 
-        when(inventoryRepository.findByProduct(product))
+        when(inventoryRepository.findByProductForUpdate(product))
                 .thenReturn(Optional.of(inventory));
 
         assertThrows(
@@ -943,7 +943,7 @@ class OrderServiceTest {
         when(orderItemRepository.findByOrder(order))
                 .thenReturn(List.of(orderItem));
 
-        when(inventoryRepository.findByProduct(product))
+        when(inventoryRepository.findByProductForUpdate(product))
                 .thenReturn(Optional.of(inventory));
 
         when(orderRepository.save(order))
@@ -988,7 +988,7 @@ class OrderServiceTest {
         when(orderItemRepository.findByOrder(order))
                 .thenReturn(List.of(orderItem));
 
-        when(inventoryRepository.findByProduct(product))
+        when(inventoryRepository.findByProductForUpdate(product))
                 .thenReturn(Optional.of(inventory));
 
         when(orderRepository.save(order))
@@ -1101,7 +1101,7 @@ class OrderServiceTest {
         when(orderItemRepository.findByOrder(order))
                 .thenReturn(List.of(orderItem));
 
-        when(inventoryRepository.findByProduct(product))
+        when(inventoryRepository.findByProductForUpdate(product))
                 .thenReturn(Optional.empty());
 
         assertThrows(
@@ -1294,8 +1294,13 @@ class OrderServiceTest {
     // HANDLE PAYMENT SUCCESS
     // =========================================================
 
+    // NOTE: handlePaymentSuccess no longer reduces inventory — stock is now
+    // reserved (decremented) at order-creation time under a row lock, so
+    // confirming payment only ever needs to flip the order status. It also
+    // now requires the caller's email and checks order ownership.
+
     @Test
-    void shouldHandlePaymentSuccessAndReduceInventory() {
+    void shouldHandlePaymentSuccessAndConfirmOrder() {
 
         order.setOrderStatus(OrderStatus.PENDING);
 
@@ -1305,30 +1310,38 @@ class OrderServiceTest {
         when(paymentRepository.findByOrder_OrderId(100L))
                 .thenReturn(Optional.of(payment));
 
-        when(orderItemRepository.findByOrder(order))
-                .thenReturn(List.of(orderItem));
-
-        when(inventoryRepository.findByProduct(product))
-                .thenReturn(Optional.of(inventory));
-
-        orderService.handlePaymentSuccess(100L);
-
-        // 10 - 1
-        assertEquals(9, inventory.getCurrentStock());
+        orderService.handlePaymentSuccess("user@gmail.com", 100L);
 
         assertEquals(
                 OrderStatus.CONFIRMED,
                 order.getOrderStatus()
         );
 
-        verify(inventoryRepository)
-                .save(inventory);
-
-        verify(stockMovementRepository)
-                .save(any(StockMovement.class));
-
         verify(orderRepository)
                 .save(order);
+
+        verify(inventoryRepository, never())
+                .save(any(Inventory.class));
+    }
+
+    @Test
+    void shouldThrowExceptionWhenConfirmingAnotherUsersOrder() {
+
+        order.setOrderStatus(OrderStatus.PENDING);
+
+        when(orderRepository.findById(100L))
+                .thenReturn(Optional.of(order));
+
+        assertThrows(
+                UnauthorizedException.class,
+                () -> orderService.handlePaymentSuccess("someoneelse@gmail.com", 100L)
+        );
+
+        verify(paymentRepository, never())
+                .findByOrder_OrderId(anyLong());
+
+        verify(orderRepository, never())
+                .save(any(Order.class));
     }
 
 
@@ -1343,7 +1356,7 @@ class OrderServiceTest {
 
         assertThrows(
                 PaymentNotFoundException.class,
-                () -> orderService.handlePaymentSuccess(100L)
+                () -> orderService.handlePaymentSuccess("user@gmail.com", 100L)
         );
 
         verify(inventoryRepository, never())
@@ -1365,11 +1378,11 @@ class OrderServiceTest {
         InvalidPaymentException exception =
                 assertThrows(
                         InvalidPaymentException.class,
-                        () -> orderService.handlePaymentSuccess(100L)
+                        () -> orderService.handlePaymentSuccess("user@gmail.com", 100L)
                 );
 
         assertEquals(
-                "Payment is not successful. Inventory cannot be reduced.",
+                "Payment is not successful. Order cannot be confirmed.",
                 exception.getMessage()
         );
 
@@ -1389,13 +1402,13 @@ class OrderServiceTest {
         when(paymentRepository.findByOrder_OrderId(100L))
                 .thenReturn(Optional.of(payment));
 
-        orderService.handlePaymentSuccess(100L);
+        orderService.handlePaymentSuccess("user@gmail.com", 100L);
 
         verify(orderItemRepository, never())
                 .findByOrder(any(Order.class));
 
         verify(inventoryRepository, never())
-                .findByProduct(any(Product.class));
+                .findByProductForUpdate(any(Product.class));
 
         verify(orderRepository, never())
                 .save(any(Order.class));
@@ -1410,63 +1423,11 @@ class OrderServiceTest {
 
         assertThrows(
                 OrderNotFoundException.class,
-                () -> orderService.handlePaymentSuccess(100L)
+                () -> orderService.handlePaymentSuccess("user@gmail.com", 100L)
         );
 
         verify(paymentRepository, never())
                 .findByOrder_OrderId(anyLong());
-    }
-
-
-    @Test
-    void shouldThrowExceptionWhenInventoryDoesNotExistDuringPaymentSuccess() {
-
-        when(orderRepository.findById(100L))
-                .thenReturn(Optional.of(order));
-
-        when(paymentRepository.findByOrder_OrderId(100L))
-                .thenReturn(Optional.of(payment));
-
-        when(orderItemRepository.findByOrder(order))
-                .thenReturn(List.of(orderItem));
-
-        when(inventoryRepository.findByProduct(product))
-                .thenReturn(Optional.empty());
-
-        assertThrows(
-                InventoryNotFoundException.class,
-                () -> orderService.handlePaymentSuccess(100L)
-        );
-
-        verify(orderRepository, never())
-                .save(any(Order.class));
-    }
-
-
-    @Test
-    void shouldThrowExceptionWhenPaymentSuccessHasInsufficientStock() {
-
-        inventory.setCurrentStock(0);
-
-        when(orderRepository.findById(100L))
-                .thenReturn(Optional.of(order));
-
-        when(paymentRepository.findByOrder_OrderId(100L))
-                .thenReturn(Optional.of(payment));
-
-        when(orderItemRepository.findByOrder(order))
-                .thenReturn(List.of(orderItem));
-
-        when(inventoryRepository.findByProduct(product))
-                .thenReturn(Optional.of(inventory));
-
-        assertThrows(
-                InsufficientStockException.class,
-                () -> orderService.handlePaymentSuccess(100L)
-        );
-
-        verify(inventoryRepository, never())
-                .save(any(Inventory.class));
 
         verify(orderRepository, never())
                 .save(any(Order.class));
