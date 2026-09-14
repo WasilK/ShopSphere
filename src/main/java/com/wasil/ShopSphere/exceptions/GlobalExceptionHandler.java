@@ -441,6 +441,19 @@ public class GlobalExceptionHandler {
                 request
         );
     }
+    @ExceptionHandler(org.springframework.security.authentication.DisabledException.class)
+    public ResponseEntity<ErrorResponse> handleDisabledAccount(
+            org.springframework.security.authentication.DisabledException ex,
+            HttpServletRequest request) {
+
+        return buildErrorResponse(
+                HttpStatus.FORBIDDEN,
+                "ACCOUNT_DISABLED",
+                "This account has been deactivated.",
+                request
+        );
+    }
+
     @ExceptionHandler(BadCredentialsException.class)
     public ResponseEntity<ErrorResponse> handleBadCredentials(
             BadCredentialsException ex, HttpServletRequest request) {
@@ -476,6 +489,36 @@ public class GlobalExceptionHandler {
                 request
         );
     }
+    @ExceptionHandler(org.springframework.web.multipart.MaxUploadSizeExceededException.class)
+    public ResponseEntity<ErrorResponse> handleMaxUploadSizeExceeded(
+            org.springframework.web.multipart.MaxUploadSizeExceededException ex,
+            HttpServletRequest request) {
+
+        return buildErrorResponse(
+                HttpStatus.CONTENT_TOO_LARGE,
+                "FILE_TOO_LARGE",
+                "Uploaded file exceeds the maximum allowed size.",
+                request
+        );
+    }
+
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<ErrorResponse> handleGenericException(
+            Exception ex,
+            HttpServletRequest request) {
+
+        // Log the full exception server-side; never expose internals to the client.
+        org.slf4j.LoggerFactory.getLogger(GlobalExceptionHandler.class)
+                .error("Unhandled exception on {}", request.getRequestURI(), ex);
+
+        return buildErrorResponse(
+                HttpStatus.INTERNAL_SERVER_ERROR,
+                "INTERNAL_ERROR",
+                "An unexpected error occurred. Please try again later.",
+                request
+        );
+    }
+
     private ResponseEntity<ErrorResponse> buildErrorResponse(
             HttpStatus status,
             String error,

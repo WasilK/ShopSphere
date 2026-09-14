@@ -82,6 +82,15 @@ public class IdempotencyService {
 
     /*
      * Mark the request as failed.
+     *
+     * Deliberately plain @Transactional (joins the caller's transaction).
+     * CheckoutService wraps the whole create-key -> attempt-checkout ->
+     * mark-completed/failed sequence in ONE transaction, so that a failed
+     * checkout rolls back completely (order, stock reservation, AND the
+     * idempotency key itself) leaving no trace — a retry with the same
+     * key just starts clean. An earlier REQUIRES_NEW here caused this
+     * method to try updating the same still-uncommitted row the parent
+     * transaction had just written, which self-deadlocked.
      */
     @Transactional
     public void markFailed(IdempotencyKey key) {
