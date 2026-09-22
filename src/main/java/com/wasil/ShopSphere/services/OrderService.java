@@ -8,6 +8,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -620,6 +622,25 @@ public class OrderService {
         );
 
         stockMovementRepository.save(stockMovement);
+    }
+
+    // =========================================================
+// SCHEDULED: EXPIRE ABANDONED PENDING ORDERS
+// =========================================================
+
+    @Transactional
+    public void expireStalePendingOrders(Duration timeout) {
+        Instant cutoff = Instant.now().minus(timeout);
+
+        List<Order> stale = orderRepository
+                .findByOrderStatusAndOrderCreatedAtBefore(OrderStatus.PENDING, cutoff);
+
+        for (Order order : stale) {
+            List<OrderItem> orderItems = orderItemRepository.findByOrder(order);
+            restoreInventoryForItems(orderItems, MovementType.ORDER_CANCELLED);
+            order.setOrderStatus(OrderStatus.CANCELLED);
+            orderRepository.save(order);
+        }
     }
 
 
