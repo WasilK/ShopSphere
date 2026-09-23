@@ -485,6 +485,28 @@ public class OrderService {
                 orderItemRepository.findByOrder(order)
         );
     }
+    @Transactional
+    public OrderResponse adminCancelOrder(Long orderId){
+        Order order = orderRepository.findById(orderId).orElseThrow(() -> new OrderNotFoundException("Order not found with id : " + orderId));
+        if(order.getOrderStatus() == OrderStatus.CANCELLED || order.getOrderStatus() == OrderStatus.DELIVERED){
+            throw new OrderCannotBeCancelled("Order is already cancelled or delivered");
+        }
+        List<OrderItem> orderItems =
+                orderItemRepository.findByOrder(order);
+
+        restoreInventoryForItems(orderItems, MovementType.ORDER_CANCELLED);
+
+        // Update order status
+        order.setOrderStatus(OrderStatus.CANCELLED);
+
+        Order savedOrder =
+                orderRepository.save(order);
+
+        return convertToResponse(
+                savedOrder,
+                orderItems
+        );
+    }
 
 
     // =========================================================
@@ -622,25 +644,6 @@ public class OrderService {
         );
 
         stockMovementRepository.save(stockMovement);
-    }
-
-    // =========================================================
-// SCHEDULED: EXPIRE ABANDONED PENDING ORDERS
-// =========================================================
-
-    @Transactional
-    public void expireStalePendingOrders(Duration timeout) {
-        Instant cutoff = Instant.now().minus(timeout);
-
-        List<Order> stale = orderRepository
-                .findByOrderStatusAndOrderCreatedAtBefore(OrderStatus.PENDING, cutoff);
-
-        for (Order order : stale) {
-            List<OrderItem> orderItems = orderItemRepository.findByOrder(order);
-            restoreInventoryForItems(orderItems, MovementType.ORDER_CANCELLED);
-            order.setOrderStatus(OrderStatus.CANCELLED);
-            orderRepository.save(order);
-        }
     }
 
 
