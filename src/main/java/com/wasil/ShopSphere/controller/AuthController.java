@@ -8,6 +8,8 @@ import com.wasil.ShopSphere.security.JwtService;
 import com.wasil.ShopSphere.security.TokenBlacklistService;
 import com.wasil.ShopSphere.services.AuthService;
 import com.wasil.ShopSphere.services.UserService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
@@ -16,6 +18,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+@Tag(name = "Authentication API's")
 @RestController
 @RequestMapping("/auth")
 public class AuthController {
@@ -34,10 +37,12 @@ public class AuthController {
         this.jwtService = jwtService;
         this.tokenBlacklistService = tokenBlacklistService;
     }
+    @Operation(security = {}, summary = "To login.")
     @PostMapping("/login")
     public LoginResponse login(@RequestBody LoginRequest request){
         return authService.login(request);
     }
+    @Operation(security = {}, summary = "To signup a new account.")
     @PostMapping("/register")
     public UserResponse register(@Valid @RequestBody UserRequest request){
         return userService.addUser(request);
@@ -50,6 +55,7 @@ public class AuthController {
      * subsequent request, so the token stops working immediately instead
      * of remaining valid until it naturally expires.
      */
+    @Operation(summary = "To logout.")
     @PostMapping("/logout")
     public ResponseEntity<Void> logout(HttpServletRequest request) {
 
