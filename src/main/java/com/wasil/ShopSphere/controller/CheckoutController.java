@@ -8,7 +8,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
-@Tag(name = "Checkout API's", description = "Requires an idempotency key. Used to create orders.")
+@Tag(name = "Checkout API's", description = "1. Requires an idempotency key. 2. Used to create orders. 3. Orders are made in pending state confirm it using payments API. 4. An address is required for the user before creating an order." )
 @RestController
 @RequestMapping("/checkout")
 public class CheckoutController {
