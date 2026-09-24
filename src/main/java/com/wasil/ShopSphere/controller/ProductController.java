@@ -9,6 +9,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
+import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -49,7 +50,7 @@ public class ProductController {
         productService.deleteProduct(id);
     }
     @Operation(summary = "Adds product images to a product using product id, only allowed for admin.")
-    @PostMapping("/{id}/images")
+    @PostMapping(value = "/{id}/images", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ProductImageResponse uploadProductImage(@PathVariable Long id, @RequestParam("file") MultipartFile file){
        return productImageService.uploadProductImage(id, file);
     }
