@@ -36,6 +36,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             HttpServletResponse response,
             FilterChain filterChain)
             throws ServletException, IOException {
+        System.out.println(
+                "JWT FILTER HIT: "
+                        + request.getMethod()
+                        + " "
+                        + request.getRequestURI()
+                        + " | Authorization present: "
+                        + (request.getHeader("Authorization") != null)
+        );
         String authHeader = request.getHeader("Authorization");
 
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
@@ -48,32 +56,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             UserDetails userDetails = userDetailsService.loadUserByUsername(email);
 
             String jti = jwtService.extractJti(jwt);
-
-            // ===== TEMPORARY DEBUGGING =====
-
-            boolean tokenValid =
-                    jwtService.isTokenValid(jwt, userDetails);
-
-            boolean enabled =
-                    userDetails.isEnabled();
-
-            boolean blacklisted =
-                    tokenBlacklistService.isBlacklisted(jti);
-
-            boolean alreadyAuthenticated =
-                    SecurityContextHolder.getContext()
-                            .getAuthentication() != null;
-
-            System.out.println("========== JWT DEBUG ==========");
-            System.out.println("email = " + email);
-            System.out.println("jti = " + jti);
-            System.out.println("tokenValid = " + tokenValid);
-            System.out.println("enabled = " + enabled);
-            System.out.println("blacklisted = " + blacklisted);
-            System.out.println(
-                    "alreadyAuthenticated = " + alreadyAuthenticated
-            );
-            System.out.println("===============================");
 
             if (jwtService.isTokenValid(jwt, userDetails)
                     && userDetails.isEnabled()
